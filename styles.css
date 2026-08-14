@@ -1,0 +1,279 @@
+/* ============================================================
+   styles.css — Reglas personalizadas y complemento de Tailwind
+   Módulo de Geolocalización y Búsqueda de Parcelas
+   Cementerio Parque Memorial — Coovilros Ltda.
+   ============================================================ */
+
+/* ---------- Importación de tipografía Inter (si no cargó por CDN) ---------- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ---------- Variables de Diseño Coovilros ---------- */
+:root {
+    /* Verdes institucionales */
+    --coovilros-primary:    #0B6B3A;
+    --coovilros-dark:        #005826;
+    --coovilros-action:      #00A859;
+    --coovilros-accent:      #4CAF50;
+
+    /* Fondos e íconos */
+    --coovilros-icon-bg:     #E3F5E9;
+    --coovilros-bg:          #F4F6F8;
+    --coovilros-bg-alt:      #F8FAFC;
+
+    /* Textos */
+    --coovilros-text:        #222222;
+    --coovilros-text-sec:    #666666;
+    --coovilros-white:       #FFFFFF;
+
+    /* Sombras suaves estilo Coovilros */
+    --shadow-sm-custom:  0 1px 3px rgba(11,107,58,0.06), 0 1px 2px rgba(11,107,58,0.04);
+    --shadow-md-custom:  0 4px 12px rgba(11,107,58,0.08), 0 2px 4px rgba(11,107,58,0.04);
+    --shadow-lg-custom:  0 10px 30px rgba(11,107,58,0.10), 0 4px 8px rgba(11,107,58,0.06);
+
+    /* Bordes */
+    --radius-2xl: 1rem;
+    --radius-xl:  0.75rem;
+}
+
+/* ---------- Reset y base ---------- */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+}
+
+/* ---------- Tipografía base con Inter ---------- */
+body {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--coovilros-text);
+    background-color: var(--coovilros-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---------- Scrollbar personalizado (suave, discreto) ---------- */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--coovilros-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--coovilros-primary);
+    border-radius: 3px;
+    opacity: 0.5;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--coovilros-dark);
+    opacity: 0.8;
+}
+
+/* ---------- Selección de texto ---------- */
+::selection {
+    background: var(--coovilros-primary);
+    color: #fff;
+}
+
+/* ---------- Focus visible accesible ---------- */
+:focus-visible {
+    outline: 2px solid var(--coovilros-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* ---------- Botones y enlaces de acción ---------- */
+a {
+    color: var(--coovilros-primary);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+a:hover {
+    color: var(--coovilros-dark);
+}
+
+/* ---------- Mapa: contenedor y overlays ---------- */
+
+#map-container {
+    position: relative;
+    background: #e8e8e8; /* color de carga antes de que lleguen los tiles */
+    border-radius: var(--radius-2xl);
+    overflow: hidden;
+}
+
+/* Evitar que el contenedor del mapa colapse cuando está vacío */
+#map-container .leaflet-container {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: var(--radius-2xl);
+}
+
+/* ---------- Marcador objetivo (parcela) personalizado ---------- */
+.custom-target-marker {
+    background: transparent !important;
+    border: none !important;
+}
+
+.custom-target-marker div {
+    transition: transform 0.15s ease;
+}
+
+.custom-target-marker:hover div {
+    transform: rotate(-45deg) scale(1.08);
+}
+
+/* ---------- Marcador usuario (círculo azul) ---------- */
+.custom-user-marker {
+    background: transparent !important;
+    border: none !important;
+}
+
+/* ---------- Popup personalizado ---------- */
+.custom-popup .leaflet-popup-content-wrapper {
+    border-radius: var(--radius-xl);
+    padding: 0;
+    box-shadow: var(--shadow-md-custom);
+    border: 1px solid rgba(11, 107, 58, 0.12);
+    font-family: 'Inter', sans-serif;
+}
+
+.custom-popup .leaflet-popup-content {
+    margin: 12px 16px;
+}
+
+.custom-popup .leaflet-popup-tip {
+    box-shadow: none;
+    background: #fff;
+}
+
+.custom-popup .leaflet-popup-close-button {
+    top: 8px !important;
+    right: 8px !important;
+    color: var(--coovilros-text-sec) !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    transition: color 0.15s;
+}
+
+.custom-popup .leaflet-popup-close-button:hover {
+    color: var(--coovilros-primary) !important;
+}
+
+/* ---------- Input de búsqueda ---------- */
+#search-input::placeholder {
+    color: var(--coovilros-text-sec);
+    font-weight: 400;
+    opacity: 0.85;
+}
+
+/* ---------- Tarjetas de resultados: micro-interacciones ---------- */
+#results-grid article {
+    will-change: transform;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.2s ease,
+                border-color 0.2s ease;
+}
+
+#results-grid article:focus {
+    outline: 2px solid var(--coovilros-primary);
+    outline-offset: 2px;
+}
+
+/* ---------- Badge de distancia flotante ---------- */
+#distance-badge {
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+#distance-badge span {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* ---------- Advertencia GPS ---------- */
+#gps-warning {
+    animation: fade-slide-in 0.3s ease;
+}
+
+@keyframes fade-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ---------- Animación sutil para botón de Google Maps ---------- */
+@keyframes pulse-once-gmaps {
+    0%   { box-shadow: 0 6px 20px rgba(0,168,89,0.35); }
+    50%  { box-shadow: 0 6px 28px rgba(0,168,89,0.55); }
+    100% { box-shadow: 0 6px 20px rgba(0,168,89,0.35); }
+}
+
+/* Aplicado cuando el botón se renderiza por primera vez en vista B */
+/*
+   Nota: el atributo class="animate-pulse-once" se maneja desde app.js
+   cuando se construye la URL dinámicamente; aquí solo definimos la clave.
+*/
+.animate-pulse-once {
+    animation: pulse-once-gmaps 1.4s ease-in-out 1;
+}
+
+/* ---------- Ajustes táctiles para dispositivos móviles ---------- */
+@media (hover: none) and (pointer: coarse) {
+    #results-grid article:hover {
+        transform: none;
+        box-shadow: var(--shadow-sm-custom);
+    }
+
+    #results-grid article:active {
+        transform: scale(0.98);
+    }
+}
+
+/* ---------- Ajuste de espaciado vertical para caber en pantallas pequeñas ---------- */
+@media (max-width: 480px) {
+    #app-root {
+        padding-top: 0.75rem;
+    }
+}
+
+/* ---------- Footer ---------- */
+footer a {
+    color: var(--coovilros-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1px;
+    text-decoration-color: rgba(11,107,58,0.3);
+}
+
+footer a:hover {
+    color: var(--coovilros-dark);
+    text-decoration-color: var(--coovilros-primary);
+}
+
+/* ---------- Accesibilidad: reduced-motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
