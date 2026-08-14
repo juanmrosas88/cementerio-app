@@ -57,6 +57,7 @@ const app = (() => {
     let geolocationWatcher    = null;   // ID del watchPosition
     let gpsAvailable          = false;  // ¿El usuario concedió permisos GPS?
     let currentTargetCoords   = null;   // { lat, lng } de la parcela seleccionada
+    let distanceUpdateTimer   = null;   // ID del setInterval de refresco del badge (1 s)
 
     // Referencias DOM
     const $ = (sel) => document.querySelector(sel);
@@ -212,6 +213,7 @@ const app = (() => {
         // Limpiar indicadores de distancia y GPS
         hideDistanceBadge();
         hideGpsWarning();
+        stopDistanceUpdates();
     }
 
     // ------------------------------------------------------------------------
@@ -507,6 +509,9 @@ const app = (() => {
         // Limpiar estados
         hideGpsWarning();
 
+        // Refrescar el badge de distancia cada 1 segundo
+        startDistanceUpdates();
+
         if (!navigator.geolocation) {
             showGpsWarning({ latitud: targetLat, longitud: targetLng });
             return;
@@ -613,8 +618,15 @@ const app = (() => {
     /**
      * Dibuja la línea punteada entre el usuario y el objetivo, y actualiza
      * el badge de distancia en tiempo real.
+     *
+     * @param {Object}  userLatLng  Última posición conocida del usuario.
+     * @param {number}  targetLat   Latitud de la parcela objetivo.
+     * @param {number}  targetLng   Longitud de la parcela objetivo.
+     * @param {boolean} [fitBounds=true]  Si es true, ajusta el zoom para que
+     *              quepa la ruta. En el refresco periódico de 1 s se pasa false
+     *              para no "saltar" la vista del mapa constantemente.
      */
-    function updateDistanceAndLine(userLatLng, targetLat, targetLng) {
+    function updateDistanceAndLine(userLatLng, targetLat, targetLng, fitBounds = true) {
         if (!map) return;
 
         // Remover línea anterior
@@ -641,12 +653,49 @@ const app = (() => {
             lineJoin:   "round"
         }).addTo(map);
 
-        // Adaptar zoom para que quepa la ruta (opcional)
-        const bounds = L.latLngBounds(
-            [userLatLng.lat, userLatLng.lng],
-            [targetLat, targetLng]
-        );
-        map.fitBounds(bounds, { padding: [60, 60], maxZoom: ZOOM_TARGET, animate: true });
+        // Adaptar zoom para que quepa la ruta (solo con una nueva posición GPS,
+        // no en el refresco periódico del badge)
+        if (fitBounds) {
+            const bounds = L.latLngBounds(
+                [userLatLng.lat, userLatLng.lng],
+                [targetLat, targetLng]
+            );
+            map.fitBounds(bounds, { padding: [60, 60], maxZoom: ZOOM_TARGET, animate: true });
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    //  Refresco periódico del badge de distancia (cada 1 segundo)
+    // ------------------------------------------------------------------------
+
+    /**
+     * Inicia un intervalo que recalcula la distancia al objetivo cada segundo
+     * usando la última posición GPS conocida del usuario. Si el GPS aún no
+     * entregó una posición, el tick simplemente no hace nada.
+     */
+    function startDistanceUpdates() {
+        stopDistanceUpdates();
+        distanceUpdateTimer = setInterval(() => {
+            if (gpsAvailable && userMarker && currentTargetCoords) {
+                // fitBounds=false: solo se actualizan badge y línea, sin re-zoom
+                updateDistanceAndLine(
+                    userMarker.getLatLng(),
+                    currentTargetCoords.lat,
+                    currentTargetCoords.lng,
+                    false
+                );
+            }
+        }, 1000);
+    }
+
+    /**
+     * Detiene el intervalo de refresco del badge de distancia.
+     */
+    function stopDistanceUpdates() {
+        if (distanceUpdateTimer !== null) {
+            clearInterval(distanceUpdateTimer);
+            distanceUpdateTimer = null;
+        }
     }
 
     // ------------------------------------------------------------------------

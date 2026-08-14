@@ -113,6 +113,35 @@ Luego abrí <http://localhost:8080>.
 
 ---
 
+## 🌐 Publicación de prueba (GitHub Pages)
+
+El repositorio está configurado para publicar la app en **GitHub Pages** mediante **GitHub Actions** (workflow en `.github/workflows/deploy.yml`). El sitio queda disponible en:
+
+> **https://juanmrosas88.github.io/cementerio-app/**
+
+Es un sitio de **testing** con HTTPS (el GPS funciona) y actualización automática: **cada `git push` a `main` redeplea solo**. Tarda aproximadamente 1 minuto.
+
+### Configuración única (una sola vez)
+
+1. En GitHub: **Settings → Pages → Source → GitHub Actions**.
+2. El primer deploy se dispara con el primer push a `main` (o con el botón **Run workflow** en la pestaña **Actions**).
+
+### Redeplegar cambios
+
+```bash
+git add .
+git commit -m "tus cambios"
+git push
+```
+
+### Qué publica el workflow
+
+Solo los archivos de la app (`index.html`, `app.js`, `data.js`, `styles.css`, `logoheader.svg`) en un directorio limpio. Quedan **excluidos** del sitio los archivos internos (`.freebuff/`, `NUL`, `.git/`, etc.).
+
+> 💡 ¿Preferís no usar git? Alternativa igual de simple: **Netlify CLI** (`npm i -g netlify-cli`, `netlify login`, `netlify deploy --prod --dir=.`).
+
+---
+
 ## 🗄️ Modelo de datos
 
 Cada registro tiene la siguiente forma:
