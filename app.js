@@ -3,11 +3,13 @@
  * Módulo de Geolocalización y Búsqueda de Parcelas
  * Cementerio Parque Memorial — Coovilros Ltda.
  *
+ * Versión: Google Maps JavaScript API (reemplaza Leaflet/Esri)
+ *
  * Responsabilidades:
  *   - Conmutación de vistas (Búsqueda / Ficha+Mapa)
  *   - Búsqueda en tiempo real sobre MOCK_DATABASE
  *   - Renderizado de tarjetas estilo Coovilros
- *   - Inicialización y manejo del mapa Leaflet
+ *   - Inicialización y manejo del mapa Google Maps (satelital)
  *   - Geolocalización GPS en tiempo real con watchPosition
  *   - Línea de ruta + badge de distancia dinámico
  *   - Botón de navegación externa a Google Maps
@@ -20,18 +22,15 @@ const app = (() => {
     // Constantes y configuración
     // ------------------------------------------------------------------------
 
-    // Coordenadas centro del cementerio ( fallback si no hay GPS )
+    // Coordenadas centro del cementerio (fallback si no hay GPS)
     const CEMETERY_CENTER = {
         lat: -31.5667308,
         lng: -63.5166732
     };
 
-    // Niveles de zoom
-    // Los tiles satelitales de Esri (World Imagery) en esta zona solo tienen
-    // datos reales hasta zoom 18; desde z19 en adelante devuelven el mosaico
-    // gris "map data not yet available". Por eso 18 es el límite y el zoom inicial.
-    const ZOOM_CEMETERY = 18;  // Máximo zoom con imágenes disponibles (límite Esri)
-    const ZOOM_TARGET   = 18;  // Zoom de apertura de la parcela
+    // Niveles de zoom — Google Maps soporta hasta 21, mucho más que Esri (18)
+    const ZOOM_CEMETERY = 21;  // Máximo zoom real de Google Maps satelital
+    const ZOOM_TARGET   = 19;  // Zoom de apertura de la parcela (4 niveles más que Esri)
 
     // Colores Coovilros
     const COLORS = {
@@ -49,11 +48,12 @@ const app = (() => {
     // Estado interno
     // ------------------------------------------------------------------------
 
-    let map                   = null;
+    let map                   = null;   // google.maps.Map instance
     let userMarker            = null;   // Marcador de la posición del usuario
-    let userCircle            = null;   // Círculo azul animado
+    let userCircle            = null;   // Círculo azul de precisión
     let targetMarker          = null;   // Marcador de la parcela objetivo
-    let routeLine             = null;   // Polyline_usuario → parcela
+    let targetInfoWindow      = null;   // InfoWindow del marcador objetivo
+    let routeLine             = null;   // Polyline usuario → parcela
     let geolocationWatcher    = null;   // ID del watchPosition
     let gpsAvailable          = false;  // ¿El usuario concedió permisos GPS?
     let currentTargetCoords   = null;   // { lat, lng } de la parcela seleccionada
@@ -88,12 +88,11 @@ const app = (() => {
     };
 
     // ------------------------------------------------------------------------
-    //Utilidades
+    // Utilidades
     // ------------------------------------------------------------------------
 
     /**
      * Da formato a una fecha ISO "YYYY-MM-DD" → "DD de MMMM de YYYY".
-     * Ej: "1944-03-27" → "27 de marzo de 1944"
      */
     function formatDate(isoDate) {
         if (!isoDate) return "—";
@@ -103,114 +102,133 @@ const app = (() => {
             "enero","febrero","marzo","abril","mayo","junio",
             "julio","agosto","septiembre","octubre","noviembre","diciembre"
         ];
-        const day = date.getDate();
-        const mes = meses[date.getMonth()];
-        return `${day} de ${mes} de ${y}`;
+        return `${date.getDate()} de ${meses[date.getMonth()]} de ${y}`;
     }
 
     /**
      * Redondea metros a entero y formatea con separador de miles.
      */
     function formatDistance(meters) {
-        const rounded = Math.round(meters);
-        return rounded.toLocaleString("es-AR") + " m";
+        return Math.round(meters).toLocaleString("es-AR") + " m";
     }
 
     /**
-     * Mapeo de sector → color Leaflet correspondiente.
+     * Mapeo de sector → color.
      */
     function getSectorColor(sector) {
-        const map = {
-            "Sector Verde":   "#0B6B3A",
-            "Sector Azul":    "#1565C0",
-            "Sector Amarillo":"#F9A825",
-            "Sector Rojo":    "#C62828",
-            "Sector Rosa":    "#AD1457",
-            "Sector Naranja": "#EF6C00"
+        const colorMap = {
+            "Sector Verde":    "#0B6B3A",
+            "Sector Azul":     "#1565C0",
+            "Sector Amarillo": "#F9A825",
+            "Sector Rojo":     "#C62828",
+            "Sector Rosa":     "#AD1457",
+            "Sector Naranja":  "#EF6C00"
         };
-        return map[sector] || "#0B6B3A";
+        return colorMap[sector] || "#0B6B3A";
     }
 
     /**
-     * Crea un ícono personalizado para Leaflet basado en colores Coovilros.
+     * Fórmula de Haversine para calcular distancia entre dos puntos en metros.
+     * (Google Maps no tiene un método directo de distancia en el objeto Map)
      */
-    function createTargetIcon(sector) {
+    function haversineDistance(lat1, lng1, lat2, lng2) {
+        const R = 6371000; // Radio de la Tierra en metros
+        const toRad = (deg) => deg * Math.PI / 180;
+        const dLat = toRad(lat2 - lat1);
+        const dLng = toRad(lng2 - lng1);
+        const a = Math.sin(dLat / 2) ** 2 +
+                  Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                  Math.sin(dLng / 2) ** 2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    /**
+     * Crea el marcador SVG de color para la parcela (Google Maps AdvancedMarkerElement).
+     */
+    function createTargetMarkerContent(sector) {
         const color = getSectorColor(sector);
-        return L.divIcon({
-            className: "custom-target-marker",
-            html: `
-                <div style="
-                    width: 44px;
-                    height: 44px;
-                    background: ${color};
-                    border: 4px solid #FFFFFF;
-                    border-radius: 50% 50% 50% 0;
-                    transform: rotate(-45deg);
-                    box-shadow: 0 3px 10px rgba(0,0,0,0.35);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                ">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-                         style="transform: rotate(45deg); filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3))">
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
-                              fill="#FFFFFF" stroke="#0B6B3A" stroke-width="1.5"/>
-                        <circle cx="12" cy="9" r="3" fill="#0B6B3A"/>
-                    </svg>
-                </div>
-            `,
-            iconSize:     [44, 44],
-            iconAnchor:   [22, 44],   // Punta de la flecha en el centro
-            popupAnchor:  [0, -48]
-        });
+        const pin = document.createElement("div");
+        pin.innerHTML = `
+            <div style="
+                width: 44px;
+                height: 44px;
+                background: ${color};
+                border: 4px solid #FFFFFF;
+                border-radius: 50% 50% 50% 0;
+                transform: rotate(-45deg);
+                box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+            ">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                     style="transform: rotate(45deg); filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3))">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+                          fill="#FFFFFF" stroke="#0B6B3A" stroke-width="1.5"/>
+                    <circle cx="12" cy="9" r="3" fill="#0B6B3A"/>
+                </svg>
+            </div>
+        `;
+        return pin;
     }
 
     /**
-     * Crea el marcador circular azul animado para la posición del usuario.
+     * Crea el contenido HTML del marcador de usuario (círculo azul animado).
      */
-    function createUserIcon() {
-        return L.divIcon({
-            className: "custom-user-marker",
-            html: `
-                <div style="
-                    width: 28px;
-                    height: 28px;
-                    background: radial-gradient(circle at 35% 35%, #42A5F5, #1565C0);
-                    border: 3px solid #FFFFFF;
-                    border-radius: 50%;
-                    box-shadow: 0 2px 12px rgba(21,101,192,0.6),
-                                0 0 0 6px rgba(21,101,192,0.15);
-                    animation: pulse-blue 2s ease-in-out infinite;
-                "></div>
-                <style>
-                    @keyframes pulse-blue {
-                        0%, 100% { box-shadow: 0 2px 12px rgba(21,101,192,0.6),
+    function createUserMarkerContent() {
+        const el = document.createElement("div");
+        el.innerHTML = `
+            <div style="
+                width: 28px;
+                height: 28px;
+                background: radial-gradient(circle at 35% 35%, #42A5F5, #1565C0);
+                border: 3px solid #FFFFFF;
+                border-radius: 50%;
+                box-shadow: 0 2px 12px rgba(21,101,192,0.6),
+                            0 0 0 6px rgba(21,101,192,0.15);
+                animation: pulse-blue-gmaps 2s ease-in-out infinite;
+            "></div>
+            <style>
+                @keyframes pulse-blue-gmaps {
+                    0%, 100% { box-shadow: 0 2px 12px rgba(21,101,192,0.6),
                                                      0 0 0 6px rgba(21,101,192,0.15); }
-                        50%      { box-shadow: 0 2px 12px rgba(21,101,192,0.6),
+                    50%      { box-shadow: 0 2px 12px rgba(21,101,192,0.6),
                                                      0 0 0 14px rgba(21,101,192,0.08); }
-                    }
-                </style>
-            `,
-            iconSize:   [28, 28],
-            iconAnchor: [14, 14]
-        });
+                }
+            </style>
+        `;
+        return el;
+    }
+
+    /**
+     * Genera el HTML del InfoWindow (popup) para un registro.
+     */
+    function buildInfoWindowHTML(record) {
+        return `
+            <div style="font-family: Inter, sans-serif; min-width: 170px; padding: 4px 0;">
+                <p style="font-weight:700; color:#0B6B3A; margin:0 0 4px; font-size:14px;">
+                    ${record.extinto}
+                </p>
+                <p style="margin:2px 0; color:#666666; font-size:12px;">
+                    ${formatDate(record.nacimiento)} — ${formatDate(record.defuncion)}
+                </p>
+                <p style="margin:2px 0; color:#0B6B3A; font-size:12px; font-weight:600;">
+                    ${record.sector}
+                </p>
+            </div>
+        `;
     }
 
     // ------------------------------------------------------------------------
     //  Navegación entre vistas
     // ------------------------------------------------------------------------
 
-    /**
-     * Muestra la vista de búsqueda y oculta la de mapa.
-     * Restaura el foco al campo de búsqueda.
-     */
     function goHome() {
         dom.viewSearch.classList.remove("hidden");
         dom.viewMap.classList.add("hidden");
         dom.searchInput.value = "";
         dom.searchInput.focus();
-
-        // Limpiar indicadores de distancia y GPS
         hideDistanceBadge();
         hideGpsWarning();
         stopDistanceUpdates();
@@ -220,15 +238,10 @@ const app = (() => {
     //  VISTA A — Búsqueda y resultados
     // ------------------------------------------------------------------------
 
-    /**
-     * Filtra los registros según el query actual y los renderiza.
-     * Se dispara cada vez que el usuario escribe (input event).
-     */
     function filterRecords(query) {
         const records = window.filterRecords(query);
         renderCards(records);
 
-        // Actualizar contador
         const count = records.length;
         const countEl = document.getElementById("results-count");
         const countVal = document.getElementById("results-count-value");
@@ -240,12 +253,6 @@ const app = (() => {
         }
     }
 
-    /**
-     * Genera el HTML de la grilla de resultados y lo inyecta en el DOM.
-     * Si no hay resultados, muestra el estado vacío.
-     *
-     * @param {Array} records  Registros a renderizar.
-     */
     function renderCards(records) {
         const grid = dom.resultsGrid;
 
@@ -257,12 +264,8 @@ const app = (() => {
 
         dom.emptyState.classList.add("hidden");
 
-        // Si no hay query (búsqueda vacía), mostrar todos los resultados
-        // o un mensaje amable.
         const html = records.map((r) => {
-
             const sectorColor = getSectorColor(r.sector);
-
             return `
                 <article class="group bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-coovilros-primary/8
                                 hover:shadow-md hover:border-coovilros-primary/20 transition-all duration-200 cursor-pointer
@@ -271,9 +274,7 @@ const app = (() => {
                          role="button"
                          tabindex="0"
                          aria-label="Ver ubicación de ${r.extinto}">
-
                     <div class="flex items-start gap-3.5">
-                        <!-- Ícono circular -->
                         <div class="flex-shrink-0 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-coovilros-icon-bg flex items-center justify-center">
                             <svg class="w-5 h-5 sm:w-6 sm:h-6 text-coovilros-primary" fill="none" stroke="currentColor"
                                  viewBox="0 0 24 24" stroke-width="1.6">
@@ -282,20 +283,15 @@ const app = (() => {
                                 <circle cx="12" cy="9" r="2.5" fill="currentColor" stroke="none"/>
                             </svg>
                         </div>
-
-                        <!-- Contenido -->
                         <div class="min-w-0 flex-1">
                             <h3 class="font-bold text-coovilros-text text-base sm:text-lg leading-tight truncate">
                                 ${r.extinto}
                             </h3>
-
                             <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-sm text-coovilros-text-secondary">
                                 <span>${formatDate(r.nacimiento)}</span>
                                 <span class="text-coovilros-text-secondary/40">·</span>
                                 <span>${formatDate(r.defuncion)}</span>
                             </div>
-
-                            <!-- Badge de sector -->
                             <div class="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
                                  style="background: ${sectorColor}18; color: ${sectorColor}; border: 1px solid ${sectorColor}40;">
                                 <span class="w-1.5 h-1.5 rounded-full" style="background: ${sectorColor}"></span>
@@ -309,13 +305,11 @@ const app = (() => {
 
         grid.innerHTML = html;
 
-        // ATACHAR EVENTOS CLICK Y KEYDOWN a cada tarjeta
         grid.querySelectorAll("article").forEach((card) => {
             const handleActivate = () => {
                 const id = parseInt(card.dataset.id, 10);
                 showMapView(id);
             };
-
             card.addEventListener("click", handleActivate);
             card.addEventListener("keydown", (e) => {
                 if (e.key === "Enter" || e.key === " ") {
@@ -330,30 +324,23 @@ const app = (() => {
     //  VISTA B — Ficha del fallecido + Mapa
     // ------------------------------------------------------------------------
 
-    /**
-     * Conmuta a la vista de mapa, muestra los datos del fallecido y
-     * inicializa el mapa Leaflet si es la primera vez.
-     *
-     * @param {number} recordId  ID del registro seleccionado.
-     */
     function showMapView(recordId) {
         const record = window.getRecordById(recordId);
         if (!record) return;
 
         // 1. Actualizar encabezado de ficha
-        dom.recordName.textContent          = record.extinto;
-        dom.recordBirthTxt.textContent      = formatDate(record.nacimiento);
-        dom.recordDeathTxt.textContent      = formatDate(record.defuncion);
-        dom.recordSector.textContent        = record.sector;
+        dom.recordName.textContent     = record.extinto;
+        dom.recordBirthTxt.textContent = formatDate(record.nacimiento);
+        dom.recordDeathTxt.textContent = formatDate(record.defuncion);
+        dom.recordSector.textContent   = record.sector;
 
         // 2. Conmutar vistas
         dom.viewSearch.classList.add("hidden");
         dom.viewMap.classList.remove("hidden");
 
-        // 3. Construir URL de Google Maps
-        const gmapsUrl =
+        // 3. Construir URL de Google Maps (navegación externa — NO consume API)
+        dom.btnGoogleMaps.href =
             `https://www.google.com/maps/dir/?api=1&destination=${record.latitud},${record.longitud}&travelmode=walking`;
-        dom.btnGoogleMaps.href = gmapsUrl;
 
         // 4. Inicializar o actualizar mapa
         if (!map) {
@@ -364,152 +351,181 @@ const app = (() => {
 
         // Forzar recálculo del tamaño del mapa (crucial tras display:none → block)
         setTimeout(() => {
-            if (map) map.invalidateSize();
-        }, 120);
+            if (map) google.maps.event.trigger(map, "resize");
+        }, 200);
 
         // 5. Intentar geolocalización
         setupGeolocation(record.latitud, record.longitud);
     }
 
     // ------------------------------------------------------------------------
-    //  Mapa Leaflet
+    //  Mapa Google Maps
     // ------------------------------------------------------------------------
 
-    /**
-     * Crea el mapa Leaflet con la capa satelital de Esri World Imagery,
-     * el marcador de la parcela objetivo y (si hay GPS) los elementos de
-     * rastreo del usuario.
-     *
-     * @param {Object} record  Registro del fallecido seleccionado.
-     */
     function initMap(record) {
-        // ---- Capa base satelital ----
-        const esriSatellite = L.tileLayer(
-            "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-            {
-                attribution: "&copy; Esri, Maxar, Earthstar Geographics",
-                maxZoom: ZOOM_CEMETERY,
-                minZoom: 15
-            }
-        );
+        const center = { lat: record.latitud, lng: record.longitud };
 
-        // ---- Mapa ----
-        map = L.map("map-container", {
-            center: [record.latitud, record.longitud],
-            zoom:   ZOOM_TARGET,
-            maxZoom: ZOOM_CEMETERY,   // No permitir acercarse a tiles inexistentes
+        map = new google.maps.Map(dom.mapContainer, {
+            center: center,
+            zoom: ZOOM_TARGET,
+            minZoom: 15,
+            maxZoom: ZOOM_CEMETERY,
+            mapTypeId: google.maps.MapTypeId.SATELLITE,
+            mapTypeControl: true,
+            mapTypeControlOptions: {
+                style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+                position: google.maps.ControlPosition.BOTTOM_CENTER,
+                mapTypeIds: [
+                    google.maps.MapTypeId.SATELLITE,
+                    google.maps.MapTypeId.HYBRID,
+                    google.maps.MapTypeId.ROADMAP
+                ]
+            },
             zoomControl: true,
-            attributionControl: true
+            zoomControlOptions: {
+                position: google.maps.ControlPosition.RIGHT_BOTTOM
+            },
+            streetViewControl: false,
+            fullscreenControl: false,
+            rotateControl: false,
+            tilt: 0,
+            gestureHandling: "greedy",
+            // Desactivar POIs y labels para no distraer
+            styles: [
+                {
+                    featureType: "poi",
+                    stylers: [{ visibility: "off" }]
+                },
+                {
+                    featureType: "transit",
+                    stylers: [{ visibility: "off" }]
+                }
+            ]
         });
 
-        esriSatellite.addTo(map);
-
-        // Zoom control en esquina inferior derecha (más alcanzable en móvil)
-        map.zoomControl.setPosition("bottomright");
-
         // ---- Marcador objetivo (parcela) ----
-        targetMarker = L.marker(
-            [record.latitud, record.longitud],
-            { icon: createTargetIcon(record.sector) }
-        ).addTo(map);
+        placeTargetMarker(record);
 
-        // Popup informativo
-        targetMarker.bindPopup(`
-            <div style="font-family: Inter, sans-serif; min-width: 170px;">
-                <p style="font-weight:700; color:#0B6B3A; margin:0 0 4px; font-size:14px;">
-                    ${record.extinto}
-                </p>
-                <p style="margin:2px 0; color:#666666; font-size:12px;">
-                    ${formatDate(record.nacimiento)} — ${formatDate(record.defuncion)}
-                </p>
-                <p style="margin:2px 0; color:#0B6B3A; font-size:12px; font-weight:600;">
-                    ${record.sector}
-                </p>
-            </div>
-        `, { closeButton: true, className: "custom-popup" });
-
-        // Al hacer clic se abre el popup
-        targetMarker.on("click", () => targetMarker.openPopup());
-
-        // ---- Elementos de geolocalización (se agregan en setupGeolocation) ----
+        // ---- Geolocalización ----
         currentTargetCoords = { lat: record.latitud, lng: record.longitud };
 
-        // Si el GPS ya está disponible (ej: permiso otorgado antes), dibujar
         if (gpsAvailable) {
             drawUserElementsOnMap(currentTargetCoords.lat, currentTargetCoords.lng);
         } else {
-            // Mostrar advertencia GPS
             showGpsWarning(record);
         }
     }
 
     /**
-     * Actualiza el mapa existente para un nuevo registro (mover marcador,
-     * cambiar icono, re-centrar, recalcular distancia).
+     * Coloca (o reemplaza) el marcador de la parcela en el mapa.
+     */
+    function placeTargetMarker(record) {
+        // Remover marcador anterior
+        if (targetMarker) targetMarker.setMap(null);
+        if (targetInfoWindow) targetInfoWindow.close();
+
+        const position = { lat: record.latitud, lng: record.longitud };
+
+        // Usar AdvancedMarkerElement si está disponible (nueva API), fallback a Marker
+        if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
+            targetMarker = new google.maps.marker.AdvancedMarkerElement({
+                map: map,
+                position: position,
+                content: createTargetMarkerContent(record.sector),
+                title: record.extinto
+            });
+
+            targetInfoWindow = new google.maps.InfoWindow({
+                content: buildInfoWindowHTML(record)
+            });
+
+            targetMarker.addListener("click", () => {
+                targetInfoWindow.open({
+                    anchor: targetMarker,
+                    map: map,
+                    shouldFocus: true
+                });
+            });
+        } else {
+            // Fallback: Marker clásico
+            targetMarker = new google.maps.Marker({
+                position: position,
+                map: map,
+                title: record.extinto,
+                icon: {
+                    url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(
+                        `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44">
+                            <circle cx="22" cy="22" r="20" fill="${getSectorColor(record.sector)}" stroke="white" stroke-width="4"/>
+                            <circle cx="22" cy="16" r="6" fill="white"/>
+                            <path d="M22 6C17 6 13 10 13 15c0 8 9 17 9 17s9-9 9-17c0-5-4-9-9-9z" fill="white" opacity="0.3"/>
+                        </svg>`
+                    ),
+                    scaledSize: new google.maps.Size(44, 44),
+                    anchor: new google.maps.Point(22, 44)
+                },
+                zIndex: 100
+            });
+
+            targetInfoWindow = new google.maps.InfoWindow({
+                content: buildInfoWindowHTML(record)
+            });
+
+            targetMarker.addListener("click", () => {
+                targetInfoWindow.open(map, targetMarker);
+            });
+        }
+    }
+
+    /**
+     * Actualiza el mapa para un nuevo registro.
      */
     function updateMapForRecord(record) {
         if (!map) return;
 
-        // Mover marcador objetivo
-        if (targetMarker) map.removeLayer(targetMarker);
-        targetMarker = L.marker(
-            [record.latitud, record.longitud],
-            { icon: createTargetIcon(record.sector) }
-        ).addTo(map);
+        const newPos = { lat: record.latitud, lng: record.longitud };
 
-        targetMarker.bindPopup(`
-            <div style="font-family: Inter, sans-serif; min-width: 170px;">
-                <p style="font-weight:700; color:#0B6B3A; margin:0 0 4px; font-size:14px;">
-                    ${record.extinto}
-                </p>
-                <p style="margin:2px 0; color:#666666; font-size:12px;">
-                    ${formatDate(record.nacimiento)} — ${formatDate(record.defuncion)}
-                </p>
-                <p style="margin:2px 0; color:#0B6B3A; font-size:12px; font-weight:600;">
-                    ${record.sector}
-                </p>
-            </div>
-        `, { closeButton: true, className: "custom-popup" });
+        // Reemplazar marcador
+        placeTargetMarker(record);
+        targetInfoWindow.open({
+            anchor: targetMarker,
+            map: map,
+            shouldFocus: false
+        });
 
-        targetMarker.on("click", () => targetMarker.openPopup());
-        targetMarker.openPopup();
-
-        currentTargetCoords = { lat: record.latitud, lng: record.longitud };
+        currentTargetCoords = newPos;
 
         // Re-centrar
-        map.setView([record.latitud, record.longitud], ZOOM_TARGET, { animate: true });
+        map.panTo(newPos);
+        map.setZoom(ZOOM_TARGET);
 
         // Recalcular distancia si hay GPS activo
         if (gpsAvailable && userMarker) {
-            updateDistanceAndLine(userMarker.getLatLng(), currentTargetCoords.lat, currentTargetCoords.lng);
+            const userPos = userMarker.getPosition ? userMarker.getPosition() :
+                           (userMarker.position || null);
+            if (userPos) {
+                updateDistanceAndLine(
+                    { lat: userPos.lat(), lng: userPos.lng() },
+                    currentTargetCoords.lat,
+                    currentTargetCoords.lng
+                );
+            }
         }
 
         // Forzar recálculo de tamaño
-        setTimeout(() => map.invalidateSize(), 100);
+        setTimeout(() => google.maps.event.trigger(map, "resize"), 100);
     }
 
     // ------------------------------------------------------------------------
     //  Geolocalización
     // ------------------------------------------------------------------------
 
-    /**
-     * Solicita permisos de GPS y comienza el rastreo en tiempo real.
-     * Dibuja el marcador azul, la línea y el badge de distancia.
-     *
-     * @param {number} targetLat  Latitud de la parcela objetivo.
-     * @param {number} targetLng  Longitud de la parcela objetivo.
-     */
     function setupGeolocation(targetLat, targetLng) {
-        // Limpiar watcher anterior si existe
         if (geolocationWatcher !== null) {
             navigator.geolocation.clearWatch(geolocationWatcher);
             geolocationWatcher = null;
         }
 
-        // Limpiar estados
         hideGpsWarning();
-
-        // Refrescar el badge de distancia cada 1 segundo
         startDistanceUpdates();
 
         if (!navigator.geolocation) {
@@ -517,7 +533,7 @@ const app = (() => {
             return;
         }
 
-        // También intentar obtener posición actual rápida
+        // Posición rápida inicial
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 gpsAvailable = true;
@@ -526,19 +542,12 @@ const app = (() => {
             },
             (err) => {
                 console.warn("[GPS] getCurrentPosition falló:", err.message);
-                // No mostramos advertencia aquí; el watchPosition se encargará.
-                // Pero sí marcamos como no disponible para que el watchPosition
-                // pueda mostrar la advertencia si falla también.
                 gpsAvailable = false;
             },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 30000
-            }
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
         );
 
-        // watchPosition para rastreo continuo
+        // Rastreo continuo
         geolocationWatcher = navigator.geolocation.watchPosition(
             (pos) => {
                 const { latitude: lat, longitude: lng } = pos.coords;
@@ -551,89 +560,81 @@ const app = (() => {
                 gpsAvailable = false;
                 showGpsWarning({ latitud: targetLat, longitud: targetLng });
             },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 15000
-            }
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 }
         );
     }
 
-    /**
-     * Callback ejecutado cuando hay una posición GPS disponible.
-     * Dibuja / actualiza marcador, círculo, línea y badge de distancia.
-     *
-     * @param {number} userLat
-     * @param {number} userLng
-     * @param {number} targetLat
-     * @param {number} targetLng
-     */
     function onGpsPositionAvailable(userLat, userLng, targetLat, targetLng) {
         if (!map) return;
-
-        // Marcador + círculo usuario
         drawUserElementsOnMap(userLat, userLng);
-
-        // Línea + distancia
         updateDistanceAndLine({ lat: userLat, lng: userLng }, targetLat, targetLng);
     }
 
     /**
-     * Dibuja (o actualiza) el marcador circular azul y el círculo de
-     * precisión del usuario sobre el mapa.
+     * Dibuja o actualiza el marcador y círculo del usuario.
      */
     function drawUserElementsOnMap(userLat, userLng) {
         if (!map) return;
 
-        // Remover capas anteriores
-        if (userMarker)    map.removeLayer(userMarker);
-        if (userCircle)    map.removeLayer(userCircle);
+        const position = { lat: userLat, lng: userLng };
 
-        // Marcador de posición
-        userMarker = L.marker([userLat, userLng], {
-            icon: createUserIcon(),
-            zIndexOffset: 1000
-        }).addTo(map);
+        // Remover elementos anteriores
+        if (userMarker) userMarker.setMap(null);
+        if (userCircle) userCircle.setMap(null);
 
-        // Círculo de precisión (si el GPS lo provee)
-        if (navigator.geolocation && "coords" in navigator) {
-            // Usamos un radio fijo representativo o el de los coords si está disponible.
-            // Como no tenemos referencia directa al último objeto PositionCoords aquí,
-            // usamos un radio de 8m como estimación razonable.
-            userCircle = L.circle([userLat, userLng], {
-                radius: 8,
-                color: "#1565C0",
-                fillColor: "#42A5F5",
-                fillOpacity: 0.18,
-                weight: 1.5,
-                dashArray: "3 4",
-                zIndexOffset: 999
-            }).addTo(map);
+        // Marcador de posición del usuario
+        if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
+            userMarker = new google.maps.marker.AdvancedMarkerElement({
+                map: map,
+                position: position,
+                content: createUserMarkerContent(),
+                zIndex: 200
+            });
+        } else {
+            userMarker = new google.maps.Marker({
+                position: position,
+                map: map,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 10,
+                    fillColor: "#42A5F5",
+                    fillOpacity: 1,
+                    strokeColor: "#FFFFFF",
+                    strokeWeight: 3,
+                },
+                zIndex: 200
+            });
         }
 
-        // Asegurar que el marcador esté arriba
-        userMarker.bringToFront();
+        // Círculo de precisión
+        userCircle = new google.maps.Circle({
+            map: map,
+            center: position,
+            radius: 8,
+            fillColor: "#42A5F5",
+            fillOpacity: 0.18,
+            strokeColor: "#1565C0",
+            strokeWeight: 1.5,
+            strokeOpacity: 0.6,
+            strokeDashish: [3, 4],
+            zIndex: 199
+        });
     }
 
     /**
-     * Dibuja la línea punteada entre el usuario y el objetivo, y actualiza
-     * el badge de distancia en tiempo real.
-     *
-     * @param {Object}  userLatLng  Última posición conocida del usuario.
-     * @param {number}  targetLat   Latitud de la parcela objetivo.
-     * @param {number}  targetLng   Longitud de la parcela objetivo.
-     * @param {boolean} [fitBounds=true]  Si es true, ajusta el zoom para que
-     *              quepa la ruta. En el refresco periódico de 1 s se pasa false
-     *              para no "saltar" la vista del mapa constantemente.
+     * Dibuja la línea punteada y actualiza el badge de distancia.
      */
     function updateDistanceAndLine(userLatLng, targetLat, targetLng, fitBounds = true) {
         if (!map) return;
 
         // Remover línea anterior
-        if (routeLine) map.removeLayer(routeLine);
+        if (routeLine) routeLine.setMap(null);
 
-        // Calcular distancia
-        const distanceMeters = map.distance(userLatLng, [targetLat, targetLng]);
+        const userPos = new google.maps.LatLng(userLatLng.lat, userLatLng.lng);
+        const targetPos = new google.maps.LatLng(targetLat, targetLng);
+
+        // Calcular distancia (Haversine)
+        const distanceMeters = haversineDistance(userLatLng.lat, userLatLng.lng, targetLat, targetLng);
         const displayText = formatDistance(distanceMeters);
 
         // Actualizar badge
@@ -641,26 +642,31 @@ const app = (() => {
         showDistanceBadge();
 
         // Dibujar línea punteada
-        routeLine = L.polyline([
-            [userLatLng.lat, userLatLng.lng],
-            [targetLat, targetLng]
-        ], {
-            color:      "#0B6B3A",
-            weight:     3,
-            dashArray:  "8 10",
-            opacity:    0.85,
-            lineCap:    "round",
-            lineJoin:   "round"
-        }).addTo(map);
+        routeLine = new google.maps.Polyline({
+            path: [userPos, targetPos],
+            geodesic: true,
+            strokeColor: "#0B6B3A",
+            strokeWeight: 3,
+            strokeOpacity: 0.85,
+            icons: [{
+                icon: {
+                    path: "M 0,-1 0,1",
+                    strokeOpacity: 1,
+                    strokeWeight: 3,
+                    strokeColor: "#0B6B3A",
+                },
+                offset: "0",
+                repeat: "18px"
+            }],
+            map: map
+        });
 
-        // Adaptar zoom para que quepa la ruta (solo con una nueva posición GPS,
-        // no en el refresco periódico del badge)
+        // Ajustar zoom para ver toda la ruta
         if (fitBounds) {
-            const bounds = L.latLngBounds(
-                [userLatLng.lat, userLatLng.lng],
-                [targetLat, targetLng]
-            );
-            map.fitBounds(bounds, { padding: [60, 60], maxZoom: ZOOM_TARGET, animate: true });
+            const bounds = new google.maps.LatLngBounds();
+            bounds.extend(userPos);
+            bounds.extend(targetPos);
+            map.fitBounds(bounds, 60);
         }
     }
 
@@ -668,29 +674,27 @@ const app = (() => {
     //  Refresco periódico del badge de distancia (cada 1 segundo)
     // ------------------------------------------------------------------------
 
-    /**
-     * Inicia un intervalo que recalcula la distancia al objetivo cada segundo
-     * usando la última posición GPS conocida del usuario. Si el GPS aún no
-     * entregó una posición, el tick simplemente no hace nada.
-     */
     function startDistanceUpdates() {
         stopDistanceUpdates();
         distanceUpdateTimer = setInterval(() => {
             if (gpsAvailable && userMarker && currentTargetCoords) {
-                // fitBounds=false: solo se actualizan badge y línea, sin re-zoom
-                updateDistanceAndLine(
-                    userMarker.getLatLng(),
-                    currentTargetCoords.lat,
-                    currentTargetCoords.lng,
-                    false
-                );
+                const pos = userMarker.getPosition ? userMarker.getPosition() :
+                           (userMarker.position || null);
+                if (pos) {
+                    const userLatLng = typeof pos.lat === "function"
+                        ? { lat: pos.lat(), lng: pos.lng() }
+                        : { lat: pos.lat, lng: pos.lng };
+                    updateDistanceAndLine(
+                        userLatLng,
+                        currentTargetCoords.lat,
+                        currentTargetCoords.lng,
+                        false
+                    );
+                }
             }
         }, 1000);
     }
 
-    /**
-     * Detiene el intervalo de refresco del badge de distancia.
-     */
     function stopDistanceUpdates() {
         if (distanceUpdateTimer !== null) {
             clearInterval(distanceUpdateTimer);
@@ -699,7 +703,7 @@ const app = (() => {
     }
 
     // ------------------------------------------------------------------------
-    //  UI helpers — Badges y advertencias
+    //  UI helpers
     // ------------------------------------------------------------------------
 
     function showDistanceBadge() {
@@ -712,7 +716,6 @@ const app = (() => {
 
     function showGpsWarning(record) {
         dom.gpsWarning.classList.remove("hidden");
-        // Vincular el enlace del warning al botón de Google Maps
         dom.gpsWarningLink.href = dom.btnGoogleMaps.href;
     }
 
@@ -725,20 +728,16 @@ const app = (() => {
     // ------------------------------------------------------------------------
 
     function initApp() {
-        // Renderizar todos los resultados por defecto
         filterRecords("");
 
-        // Evento de input en tiempo real
         dom.searchInput.addEventListener("input", (e) => {
             filterRecords(e.target.value);
         });
 
-        // Botón de búsqueda (Enter del campo también la dispara por ser type=search)
         dom.searchBtn.addEventListener("click", () => {
             filterRecords(dom.searchInput.value);
         });
 
-        // Enter en el campo
         dom.searchInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
                 e.preventDefault();
@@ -746,25 +745,23 @@ const app = (() => {
             }
         });
 
-        // Botón "Volver a la búsqueda"
         dom.btnBack.addEventListener("click", goHome);
 
-        // Escuchar cambios de tamaño de ventana para recargar tiles si el
-        // mapa está visible (ej: orientación del dispositivo).
+        // Refresco del mapa en resize de ventana
         let resizeTimer;
         window.addEventListener("resize", () => {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
                 if (map && !dom.viewMap.classList.contains("hidden")) {
-                    map.invalidateSize();
+                    google.maps.event.trigger(map, "resize");
                 }
             }, 250);
         });
     }
 
-    // -----------------------------------------------------------------------
+    // ------------------------------------------------------------------------
     // Público
-    // -----------------------------------------------------------------------
+    // ------------------------------------------------------------------------
 
     return {
         initApp,

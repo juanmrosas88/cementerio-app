@@ -7,8 +7,20 @@
     <meta name="description" content="Módulo de Geolocalización y Búsqueda de Parcelas - Cooperativa Villa del Rosario">
     <meta name="theme-color" content="#0B6B3A">
 
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Google Maps JavaScript API (reemplaza Leaflet/Esri) -->
+    <!-- ⚠️ PEGÁ TU API KEY donde dice YOUR_API_KEY_HERE -->
+    <!--
+        Instrucciones:
+        1. Andá a https://console.cloud.google.com
+        2. Creá un proyecto (o usá uno existente)
+        3. Habilitá "Maps JavaScript API" en APIs & Services
+        4. Creá una API Key en Credentials
+        5. Restrigila por dominio (recomendado)
+        6. Reemplazá YOUR_API_KEY_HERE con tu key (empieza con AIza...)
+    -->
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBzbm4vENpIw4_hDvy1Vk6kzHOZ01-eDUQ&v=weekly&callback=initGoogleMap">
+    </script>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="logoheader.svg">
@@ -252,7 +264,7 @@
 
                 <!-- Contenedor del mapa -->
                 <div id="map-container" class="w-full h-[420px] sm:h-[480px] lg:h-[540px]">
-                    <!-- El mapa de Leaflet se inyecta aquí -->
+                    <!-- El mapa de Google Maps se inyecta aquí -->
                 </div>
 
                 <!-- Nota de GPS deshabilitado (se muestra si no hay permiso) -->
@@ -312,17 +324,36 @@
     </footer>
 
     <!-- ========== SCRIPTS ========== -->
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
     <!-- Módulos de la aplicación (orden secuencial: datos → app) -->
     <script src="data.js"></script>
     <script src="app.js"></script>
 
-    <!-- Inicialización al cargar el DOM -->
+    <!-- Callback que Google Maps invoca cuando la API está lista -->
     <script>
+        // Estado de carga de los dos recursos dependientes
+        window._domReady = false;
+        window._gmapsReady = false;
+
+        function tryInitApp() {
+            // Solo inicializar cuando AMBOS estén listos
+            if (window._domReady && window._gmapsReady && !window._appInitialized) {
+                window._appInitialized = true;
+                console.log('[Coovilros] Iniciando app — DOM + Google Maps listos');
+                app.initApp();
+            }
+        }
+
+        // 1) Google Maps notifica que la API JS está cargada
+        function initGoogleMap() {
+            console.log('[GoogleMaps] API cargada correctamente v=' + google.maps.version);
+            window._gmapsReady = true;
+            tryInitApp();
+        }
+
+        // 2) El DOM del navegador está parseado
         document.addEventListener('DOMContentLoaded', () => {
-            app.initApp();
+            window._domReady = true;
+            tryInitApp();
         });
     </script>
 </body>
