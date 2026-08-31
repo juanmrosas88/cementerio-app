@@ -24,13 +24,14 @@ const app = (() => {
 
     // Coordenadas centro del cementerio (fallback si no hay GPS)
     const CEMETERY_CENTER = {
-        lat: -31.5667308,
-        lng: -63.5166732
+        lat: -31.567168,
+        lng: -63.515888
     };
 
-    // Niveles de zoom — Google Maps soporta hasta 21, mucho más que Esri (18)
+    // Niveles de zoom
     const ZOOM_CEMETERY = 21;  // Máximo zoom real de Google Maps satelital
-    const ZOOM_TARGET   = 19;  // Zoom de apertura de la parcela (4 niveles más que Esri)
+    const ZOOM_INITIAL  = 18;  // Zoom de apertura general del cementerio
+    const ZOOM_TARGET   = 19;  // Zoom al seleccionar una parcela
 
     // Colores Coovilros
     const COLORS = {
@@ -50,7 +51,6 @@ const app = (() => {
 
     let map                   = null;   // google.maps.Map instance
     let userMarker            = null;   // Marcador de la posición del usuario
-    let userCircle            = null;   // Círculo azul de precisión
     let targetMarker          = null;   // Marcador de la parcela objetivo
     let targetInfoWindow      = null;   // InfoWindow del marcador objetivo
     let routeLine             = null;   // Polyline usuario → parcela
@@ -140,65 +140,6 @@ const app = (() => {
                   Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
                   Math.sin(dLng / 2) ** 2;
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
-
-    /**
-     * Crea el marcador SVG de color para la parcela (Google Maps AdvancedMarkerElement).
-     */
-    function createTargetMarkerContent(sector) {
-        const color = getSectorColor(sector);
-        const pin = document.createElement("div");
-        pin.innerHTML = `
-            <div style="
-                width: 44px;
-                height: 44px;
-                background: ${color};
-                border: 4px solid #FFFFFF;
-                border-radius: 50% 50% 50% 0;
-                transform: rotate(-45deg);
-                box-shadow: 0 3px 10px rgba(0,0,0,0.35);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-            ">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-                     style="transform: rotate(45deg); filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3))">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
-                          fill="#FFFFFF" stroke="#0B6B3A" stroke-width="1.5"/>
-                    <circle cx="12" cy="9" r="3" fill="#0B6B3A"/>
-                </svg>
-            </div>
-        `;
-        return pin;
-    }
-
-    /**
-     * Crea el contenido HTML del marcador de usuario (círculo azul animado).
-     */
-    function createUserMarkerContent() {
-        const el = document.createElement("div");
-        el.innerHTML = `
-            <div style="
-                width: 28px;
-                height: 28px;
-                background: radial-gradient(circle at 35% 35%, #42A5F5, #1565C0);
-                border: 3px solid #FFFFFF;
-                border-radius: 50%;
-                box-shadow: 0 2px 12px rgba(21,101,192,0.6),
-                            0 0 0 6px rgba(21,101,192,0.15);
-                animation: pulse-blue-gmaps 2s ease-in-out infinite;
-            "></div>
-            <style>
-                @keyframes pulse-blue-gmaps {
-                    0%, 100% { box-shadow: 0 2px 12px rgba(21,101,192,0.6),
-                                                     0 0 0 6px rgba(21,101,192,0.15); }
-                    50%      { box-shadow: 0 2px 12px rgba(21,101,192,0.6),
-                                                     0 0 0 14px rgba(21,101,192,0.08); }
-                }
-            </style>
-        `;
-        return el;
     }
 
     /**
@@ -363,11 +304,9 @@ const app = (() => {
     // ------------------------------------------------------------------------
 
     function initMap(record) {
-        const center = { lat: record.latitud, lng: record.longitud };
-
         map = new google.maps.Map(dom.mapContainer, {
-            center: center,
-            zoom: ZOOM_TARGET,
+            center: CEMETERY_CENTER,
+            zoom: ZOOM_INITIAL,
             minZoom: 15,
             maxZoom: ZOOM_CEMETERY,
             mapTypeId: google.maps.MapTypeId.SATELLITE,
@@ -425,55 +364,34 @@ const app = (() => {
         if (targetInfoWindow) targetInfoWindow.close();
 
         const position = { lat: record.latitud, lng: record.longitud };
+        const color = getSectorColor(record.sector);
 
-        // Usar AdvancedMarkerElement si está disponible (nueva API), fallback a Marker
-        if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
-            targetMarker = new google.maps.marker.AdvancedMarkerElement({
-                map: map,
-                position: position,
-                content: createTargetMarkerContent(record.sector),
-                title: record.extinto
-            });
+        // Marker clásico con icono SVG custom (reemplaza el pin por defecto)
+        targetMarker = new google.maps.Marker({
+            position: position,
+            map: map,
+            title: record.extinto,
+            icon: {
+                url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(
+                    `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="34" viewBox="0 0 24 34">
+                        <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 22 12 22s12-13 12-22C24 5.4 18.6 0 12 0z" fill="${color}"/>
+                        <circle cx="12" cy="11" r="5" fill="white"/>
+                        <circle cx="12" cy="11" r="2.5" fill="${color}"/>
+                    </svg>`
+                ),
+                scaledSize: new google.maps.Size(24, 34),
+                anchor: new google.maps.Point(12, 34)
+            },
+            zIndex: 100
+        });
 
-            targetInfoWindow = new google.maps.InfoWindow({
-                content: buildInfoWindowHTML(record)
-            });
+        targetInfoWindow = new google.maps.InfoWindow({
+            content: buildInfoWindowHTML(record)
+        });
 
-            targetMarker.addListener("click", () => {
-                targetInfoWindow.open({
-                    anchor: targetMarker,
-                    map: map,
-                    shouldFocus: true
-                });
-            });
-        } else {
-            // Fallback: Marker clásico
-            targetMarker = new google.maps.Marker({
-                position: position,
-                map: map,
-                title: record.extinto,
-                icon: {
-                    url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(
-                        `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44">
-                            <circle cx="22" cy="22" r="20" fill="${getSectorColor(record.sector)}" stroke="white" stroke-width="4"/>
-                            <circle cx="22" cy="16" r="6" fill="white"/>
-                            <path d="M22 6C17 6 13 10 13 15c0 8 9 17 9 17s9-9 9-17c0-5-4-9-9-9z" fill="white" opacity="0.3"/>
-                        </svg>`
-                    ),
-                    scaledSize: new google.maps.Size(44, 44),
-                    anchor: new google.maps.Point(22, 44)
-                },
-                zIndex: 100
-            });
-
-            targetInfoWindow = new google.maps.InfoWindow({
-                content: buildInfoWindowHTML(record)
-            });
-
-            targetMarker.addListener("click", () => {
-                targetInfoWindow.open(map, targetMarker);
-            });
-        }
+        targetMarker.addListener("click", () => {
+            targetInfoWindow.open(map, targetMarker);
+        });
     }
 
     /**
@@ -567,101 +485,92 @@ const app = (() => {
     function onGpsPositionAvailable(userLat, userLng, targetLat, targetLng) {
         if (!map) return;
         drawUserElementsOnMap(userLat, userLng);
-        updateDistanceAndLine({ lat: userLat, lng: userLng }, targetLat, targetLng);
+        // Solo actualizar badge y línea, SIN mover el zoom
+        updateDistanceAndLine({ lat: userLat, lng: userLng }, targetLat, targetLng, false);
     }
 
     /**
-     * Dibuja o actualiza el marcador y círculo del usuario.
+     * Dibuja o actualiza el marcador del usuario.
+     * Solo mueve el marker existente si ya existe; no crea círculo.
      */
     function drawUserElementsOnMap(userLat, userLng) {
         if (!map) return;
 
         const position = { lat: userLat, lng: userLng };
 
-        // Remover elementos anteriores
-        if (userMarker) userMarker.setMap(null);
-        if (userCircle) userCircle.setMap(null);
-
-        // Marcador de posición del usuario
-        if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
-            userMarker = new google.maps.marker.AdvancedMarkerElement({
-                map: map,
-                position: position,
-                content: createUserMarkerContent(),
-                zIndex: 200
-            });
-        } else {
-            userMarker = new google.maps.Marker({
-                position: position,
-                map: map,
-                icon: {
-                    path: google.maps.SymbolPath.CIRCLE,
-                    scale: 10,
-                    fillColor: "#42A5F5",
-                    fillOpacity: 1,
-                    strokeColor: "#FFFFFF",
-                    strokeWeight: 3,
-                },
-                zIndex: 200
-            });
+        // Si ya existe, solo mover (sin recrear)
+        if (userMarker) {
+            userMarker.setPosition(position);
+            return;
         }
 
-        // Círculo de precisión
-        userCircle = new google.maps.Circle({
+        // Primera vez: crear círculo azul
+        userMarker = new google.maps.Marker({
+            position: position,
             map: map,
-            center: position,
-            radius: 8,
-            fillColor: "#42A5F5",
-            fillOpacity: 0.18,
-            strokeColor: "#1565C0",
-            strokeWeight: 1.5,
-            strokeOpacity: 0.6,
-            strokeDashish: [3, 4],
-            zIndex: 199
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: "#42A5F5",
+                fillOpacity: 1,
+                strokeColor: "#FFFFFF",
+                strokeWeight: 3,
+            },
+            zIndex: 200
         });
     }
 
     /**
-     * Dibuja la línea punteada y actualiza el badge de distancia.
+     * Actualiza SOLO el badge de distancia y la línea punteada.
+     * No toca zoom ni marcadores.
+     */
+    function updateBadgeOnly(userLatLng, targetLat, targetLng) {
+        if (!map) return;
+
+        const distanceMeters = haversineDistance(userLatLng.lat, userLatLng.lng, targetLat, targetLng);
+        dom.distanceValue.textContent = `Estás a ${formatDistance(distanceMeters)} del objetivo`;
+        showDistanceBadge();
+    }
+
+    /**
+     * Dibuja la línea punteada (solo punteada, sin trazo base) y
+     * actualiza el badge de distancia.
+     *
+     * @param {boolean} [fitBounds=true]  Ajusta zoom solo en la primera llamada.
      */
     function updateDistanceAndLine(userLatLng, targetLat, targetLng, fitBounds = true) {
         if (!map) return;
 
-        // Remover línea anterior
-        if (routeLine) routeLine.setMap(null);
-
         const userPos = new google.maps.LatLng(userLatLng.lat, userLatLng.lng);
         const targetPos = new google.maps.LatLng(targetLat, targetLng);
 
-        // Calcular distancia (Haversine)
-        const distanceMeters = haversineDistance(userLatLng.lat, userLatLng.lng, targetLat, targetLng);
-        const displayText = formatDistance(distanceMeters);
+        // Remover línea anterior
+        if (routeLine) routeLine.setMap(null);
 
-        // Actualizar badge
-        dom.distanceValue.textContent = `Estás a ${displayText} del objetivo`;
+        // Calcular distancia
+        const distanceMeters = haversineDistance(userLatLng.lat, userLatLng.lng, targetLat, targetLng);
+        dom.distanceValue.textContent = `Estás a ${formatDistance(distanceMeters)} del objetivo`;
         showDistanceBadge();
 
-        // Dibujar línea punteada
+        // Línea punteada (sin stroke base, solo icons)
         routeLine = new google.maps.Polyline({
             path: [userPos, targetPos],
             geodesic: true,
-            strokeColor: "#0B6B3A",
-            strokeWeight: 3,
-            strokeOpacity: 0.85,
+            strokeOpacity: 0,  // Sin trazo base
             icons: [{
                 icon: {
-                    path: "M 0,-1 0,1",
+                    path: "M 0,-1.5 0,1.5",
                     strokeOpacity: 1,
                     strokeWeight: 3,
                     strokeColor: "#0B6B3A",
                 },
                 offset: "0",
-                repeat: "18px"
+                repeat: "16px"
             }],
             map: map
         });
 
-        // Ajustar zoom para ver toda la ruta
+        // Ajustar zoom solo cuando se pide explícitamente
         if (fitBounds) {
             const bounds = new google.maps.LatLngBounds();
             bounds.extend(userPos);
@@ -684,12 +593,8 @@ const app = (() => {
                     const userLatLng = typeof pos.lat === "function"
                         ? { lat: pos.lat(), lng: pos.lng() }
                         : { lat: pos.lat, lng: pos.lng };
-                    updateDistanceAndLine(
-                        userLatLng,
-                        currentTargetCoords.lat,
-                        currentTargetCoords.lng,
-                        false
-                    );
+                    // Solo actualizar el texto del badge, sin tocar el mapa
+                    updateBadgeOnly(userLatLng, currentTargetCoords.lat, currentTargetCoords.lng);
                 }
             }
         }, 1000);
