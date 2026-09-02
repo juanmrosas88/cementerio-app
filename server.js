@@ -101,6 +101,7 @@ function buildParcelasQuery(searchTerm = null) {
             extinto,
             TO_CHAR(nacimiento, 'YYYY-MM-DD') AS nacimiento,
             TO_CHAR(defuncion,  'YYYY-MM-DD') AS defuncion,
+            sector,
             nivel,
             ST_Y(ST_Centroid(geom))  AS latitud,
             ST_X(ST_Centroid(geom))  AS longitud
@@ -185,6 +186,7 @@ app.get('/api/parcelas/:id', async (req, res) => {
                 `SELECT parcela AS id, extinto,
                         TO_CHAR(nacimiento, 'YYYY-MM-DD') AS nacimiento,
                         TO_CHAR(defuncion, 'YYYY-MM-DD') AS defuncion,
+                        sector,
                         nivel,
                         ST_Y(ST_Centroid(geom)) AS latitud,
                         ST_X(ST_Centroid(geom)) AS longitud
