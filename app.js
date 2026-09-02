@@ -160,7 +160,8 @@ const app = (() => {
         dom.emptyState.classList.add("hidden");
 
         const html = records.map((r) => {
-            const sectorColor = getSectorColor(r.sector);
+            const sectorColor = r.color_sector || getSectorColor(r.sector);
+            const sectorName = r.sector || '';
             return `
                 <article class="group bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-coovilros-primary/8
                                 hover:shadow-md hover:border-coovilros-primary/20 transition-all duration-200 cursor-pointer
@@ -189,7 +190,7 @@ const app = (() => {
                             <div class="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
                                  style="background: ${sectorColor}18; color: ${sectorColor}; border: 1px solid ${sectorColor}40;">
                                 <span class="w-1.5 h-1.5 rounded-full" style="background: ${sectorColor}"></span>
-                                ${r.sector}
+                                ${sectorName}
                             </div>
                         </div>
                     </div>
@@ -290,7 +291,7 @@ const app = (() => {
         if (targetInfoWindow) targetInfoWindow.close();
 
         const position = { lat: record.latitud, lng: record.longitud };
-        const color = getSectorColor(record.sector);
+        const color = record.color_sector || getSectorColor(record.sector);
 
         targetMarker = new google.maps.Marker({
             position,
