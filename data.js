@@ -22676,3 +22676,96 @@ function filterRecords(query) {
 function getRecordById(id) {
     return MOCK_DATABASE.find((r) => r.id === id);
 }
+
+// ---------------------------------------------------------------------------
+// Capa de API — Conexión a PostgreSQL vía Backend Server
+// ---------------------------------------------------------------------------
+
+/**
+ * URL base del backend API.
+ * Si estás corriendo el server.js en localhost:3000, dejalo así.
+ * Si deployás el backend en otro lugar, cambiá la URL.
+ */
+const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3000';
+
+/**
+ * Flag para saber si la API está disponible.
+ */
+let apiAvailable = false;
+
+/**
+ * Intenta verificar si el backend API está corriendo.
+ * @returns {Promise<boolean>} true si la API responde
+ */
+async function checkApiAvailability() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/health`, {
+            method: 'GET',
+            signal: AbortSignal.timeout(3000) // 3 segundos timeout
+        });
+        if (response.ok) {
+            const data = await response.json();
+            console.log('✅ API PostgreSQL disponible:', data.total_registros, 'registros');
+            apiAvailable = true;
+            return true;
+        }
+    } catch (err) {
+        console.log('⚠️ API no disponible, usando MOCK_DATABASE:', err.message);
+    }
+    apiAvailable = false;
+    return false;
+}
+
+/**
+ * Busca parcelas por nombre usando la API backend.
+ * Si la API no está disponible, cae al filtro local.
+ *
+ * @param {string} query  Término de búsqueda
+ * @returns {Promise<Array>} Registros coincidentes
+ */
+async function fetchParcelas(query = '') {
+    if (!apiAvailable) {
+        // Filtro local (MOCK_DATABASE)
+        return filterRecords(query);
+    }
+
+    try {
+        const url = query 
+            ? `${API_BASE_URL}/api/parcelas?q=${encodeURIComponent(query)}`
+            : `${API_BASE_URL}/api/parcelas`;
+        
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Error en la respuesta');
+        
+        const result = await response.json();
+        console.log(`📋 API: ${result.count} registros` + (query ? ` (búsqueda: "${query}")` : ''));
+        return result.data;
+    } catch (err) {
+        console.error('❌ Error en fetchParcelas, usando filtro local:', err.message);
+        return filterRecords(query);
+    }
+}
+
+/**
+ * Obtiene una parcela por ID usando la API backend.
+ * Si la API no está disponible, cae a la búsqueda local.
+ *
+ * @param {number} id  Identificador del registro
+ * @returns {Promise<Object|undefined>} El registro o undefined
+ */
+async function fetchParcelaById(id) {
+    if (!apiAvailable) {
+        return getRecordById(id);
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/parcelas/${id}`);
+        if (!response.ok) throw new Error('No encontrada');
+        
+        const result = await response.json();
+        return result.data;
+    } catch (err) {
+        console.error('❌ Error en fetchParcelaById, usando búsqueda local:', err.message);
+        return getRecordById(id);
+    }
+}

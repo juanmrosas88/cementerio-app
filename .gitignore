@@ -1,3 +1,13 @@
 # Archivos internos / artefactos que no deben publicarse ni commitearse
 .freebuff/
 NUL
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Environment variables (contain secrets!)
+.env
+
+# Debug/temporary scripts
+list-databases.js

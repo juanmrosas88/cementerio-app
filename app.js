@@ -179,8 +179,8 @@ const app = (() => {
     //  VISTA A — Búsqueda y resultados
     // ------------------------------------------------------------------------
 
-    function filterRecords(query) {
-        const records = window.filterRecords(query);
+    async function filterRecords(query) {
+        const records = await window.fetchParcelas(query);
         renderCards(records);
 
         const count = records.length;
@@ -265,8 +265,8 @@ const app = (() => {
     //  VISTA B — Ficha del fallecido + Mapa
     // ------------------------------------------------------------------------
 
-    function showMapView(recordId) {
-        const record = window.getRecordById(recordId);
+    async function showMapView(recordId) {
+        const record = await window.fetchParcelaById(recordId);
         if (!record) return;
 
         // 1. Actualizar encabezado de ficha
