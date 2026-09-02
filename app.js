@@ -1,67 +1,37 @@
 /**
  * app.js — Lógica principal de la SPA
- * Módulo de Geolocalización y Búsqueda de Parcelas
  * Cementerio Parque Memorial — Coovilros Ltda.
- *
- * Versión: Google Maps JavaScript API (reemplaza Leaflet/Esri)
  *
  * Responsabilidades:
  *   - Conmutación de vistas (Búsqueda / Ficha+Mapa)
- *   - Búsqueda en tiempo real sobre MOCK_DATABASE
- *   - Renderizado de tarjetas estilo Coovilros
+ *   - Renderizado de tarjetas de resultados
  *   - Inicialización y manejo del mapa Google Maps (satelital)
  *   - Geolocalización GPS en tiempo real con watchPosition
  *   - Línea de ruta + badge de distancia dinámico
- *   - Botón de navegación externa a Google Maps
+ *   - Navegación externa a Google Maps
  */
 
 const app = (() => {
     "use strict";
 
-    // ------------------------------------------------------------------------
-    // Constantes y configuración
-    // ------------------------------------------------------------------------
+    // Centro del cementerio (fallback si no hay GPS)
+    const CEMETERY_CENTER = { lat: -31.567168, lng: -63.515888 };
 
-    // Coordenadas centro del cementerio (fallback si no hay GPS)
-    const CEMETERY_CENTER = {
-        lat: -31.567168,
-        lng: -63.515888
-    };
+    const ZOOM_CEMETERY = 21;
+    const ZOOM_INITIAL  = 18;
+    const ZOOM_TARGET   = 19;
 
-    // Niveles de zoom
-    const ZOOM_CEMETERY = 21;  // Máximo zoom real de Google Maps satelital
-    const ZOOM_INITIAL  = 18;  // Zoom de apertura general del cementerio
-    const ZOOM_TARGET   = 19;  // Zoom al seleccionar una parcela
+    let map                 = null;
+    let userMarker          = null;
+    let targetMarker        = null;
+    let targetInfoWindow    = null;
+    let routeLine           = null;
+    let geolocationWatcher  = null;
+    let gpsAvailable        = false;
+    let currentTargetCoords = null;
+    let distanceUpdateTimer = null;
 
-    // Colores Coovilros
-    const COLORS = {
-        primary:  "#0B6B3A",
-        dark:     "#005826",
-        action:   "#00A859",
-        bg:       "#F4F6F8",
-        iconBg:   "#E3F5E9",
-        text:     "#222222",
-        textSec:  "#666666",
-        white:    "#FFFFFF"
-    };
-
-    // ------------------------------------------------------------------------
-    // Estado interno
-    // ------------------------------------------------------------------------
-
-    let map                   = null;   // google.maps.Map instance
-    let userMarker            = null;   // Marcador de la posición del usuario
-    let targetMarker          = null;   // Marcador de la parcela objetivo
-    let targetInfoWindow      = null;   // InfoWindow del marcador objetivo
-    let routeLine             = null;   // Polyline usuario → parcela
-    let geolocationWatcher    = null;   // ID del watchPosition
-    let gpsAvailable          = false;  // ¿El usuario concedió permisos GPS?
-    let currentTargetCoords   = null;   // { lat, lng } de la parcela seleccionada
-    let distanceUpdateTimer   = null;   // ID del setInterval de refresco del badge (1 s)
-
-    // Referencias DOM
     const $ = (sel) => document.querySelector(sel);
-    const $$ = (sel) => document.querySelectorAll(sel);
 
     const dom = {
         viewSearch:     $("#view-search"),
@@ -71,12 +41,9 @@ const app = (() => {
         resultsGrid:    $("#results-grid"),
         emptyState:     $("#empty-state"),
         resultsCount:   $("#results-count"),
-        resultsCountVal:"#results-count-value",
         btnBack:        $("#btn-back"),
         recordName:     $("#record-name"),
-        recordBirth:    $("#record-birth"),
         recordBirthTxt: $("#record-birth-text"),
-        recordDeath:    $("#record-death"),
         recordDeathTxt: $("#record-death-text"),
         recordSector:   $("#record-sector"),
         mapContainer:   $("#map-container"),
@@ -87,52 +54,39 @@ const app = (() => {
         btnGoogleMaps:  $("#btn-google-maps"),
     };
 
-    // ------------------------------------------------------------------------
-    // Utilidades
-    // ------------------------------------------------------------------------
-
-    /**
-     * Da formato a una fecha ISO "YYYY-MM-DD" → "DD de MMMM de YYYY".
-     */
+    /** Formatea fecha ISO "YYYY-MM-DD" → "DD de MMMM de YYYY". */
     function formatDate(isoDate) {
         if (!isoDate) return "—";
         const [y, m, d] = isoDate.split("-").map(Number);
-        const date = new Date(y, m - 1, d);
         const meses = [
             "enero","febrero","marzo","abril","mayo","junio",
             "julio","agosto","septiembre","octubre","noviembre","diciembre"
         ];
-        return `${date.getDate()} de ${meses[date.getMonth()]} de ${y}`;
+        return `${d} de ${meses[m - 1]} de ${y}`;
     }
 
-    /**
-     * Redondea metros a entero y formatea con separador de miles.
-     */
+    /** Redondea metros a entero y formatea con separador de miles. */
     function formatDistance(meters) {
         return Math.round(meters).toLocaleString("es-AR") + " m";
     }
 
-    /**
-     * Mapeo de sector → color.
-     */
+    /** Mapeo de sector a color. */
     function getSectorColor(sector) {
         const colorMap = {
-            "Sector Verde":    "#0B6B3A",
-            "Sector Azul":     "#1565C0",
-            "Sector Amarillo": "#F9A825",
-            "Sector Rojo":     "#C62828",
-            "Sector Rosa":     "#AD1457",
-            "Sector Naranja":  "#EF6C00"
+            'AMARILLO': '#FFD700',
+            'AZUL':     '#4285F4',
+            'NARANJA':  '#FF9800',
+            'VERDE':    '#4CAF50',
+            'VIOLETA':  '#9C27B0',
         };
-        return colorMap[sector] || "#0B6B3A";
+        return colorMap[sector] || (typeof getColorForSector === 'function' ? getColorForSector(sector) : '#888888');
     }
 
     /**
-     * Fórmula de Haversine para calcular distancia entre dos puntos en metros.
-     * (Google Maps no tiene un método directo de distancia en el objeto Map)
+     * Distancia Haversine entre dos puntos en metros.
      */
     function haversineDistance(lat1, lng1, lat2, lng2) {
-        const R = 6371000; // Radio de la Tierra en metros
+        const R = 6371000;
         const toRad = (deg) => deg * Math.PI / 180;
         const dLat = toRad(lat2 - lat1);
         const dLng = toRad(lng2 - lng1);
@@ -142,9 +96,7 @@ const app = (() => {
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    /**
-     * Genera el HTML del InfoWindow (popup) para un registro.
-     */
+    /** HTML del InfoWindow para un registro. */
     function buildInfoWindowHTML(record) {
         return `
             <div style="font-family: Inter, sans-serif; min-width: 170px; padding: 4px 0;">
@@ -152,7 +104,7 @@ const app = (() => {
                     ${record.extinto}
                 </p>
                 <p style="margin:2px 0; color:#666666; font-size:12px;">
-                    ${formatDate(record.nacimiento)} — ${formatDate(record.defuncion)}
+                    ${record.nacimiento ? formatDate(record.nacimiento) : ''}${record.defuncion ? ' — ' + formatDate(record.defuncion) : ''}
                 </p>
                 <p style="margin:2px 0; color:#0B6B3A; font-size:12px; font-weight:600;">
                     ${record.sector}
@@ -160,10 +112,6 @@ const app = (() => {
             </div>
         `;
     }
-
-    // ------------------------------------------------------------------------
-    //  Navegación entre vistas
-    // ------------------------------------------------------------------------
 
     function goHome() {
         dom.viewSearch.classList.remove("hidden");
@@ -175,22 +123,28 @@ const app = (() => {
         stopDistanceUpdates();
     }
 
-    // ------------------------------------------------------------------------
-    //  VISTA A — Búsqueda y resultados
-    // ------------------------------------------------------------------------
-
     async function filterRecords(query) {
-        const records = await window.fetchParcelas(query);
-        renderCards(records);
+        try {
+            const records = await window.fetchParcelas(query);
 
-        const count = records.length;
-        const countEl = document.getElementById("results-count");
-        const countVal = document.getElementById("results-count-value");
-        if (count > 0) {
-            countEl.classList.remove("hidden");
-            countVal.textContent = count;
-        } else {
-            countEl.classList.add("hidden");
+            if (!records || !Array.isArray(records)) {
+                console.error('[App] fetchParcelas devolvió:', records);
+                return;
+            }
+
+            renderCards(records);
+
+            const count = records.length;
+            const countEl = document.getElementById("results-count");
+            const countVal = document.getElementById("results-count-value");
+            if (count > 0) {
+                countEl.classList.remove("hidden");
+                countVal.textContent = count;
+            } else {
+                countEl.classList.add("hidden");
+            }
+        } catch (err) {
+            console.error('[App] Error en filterRecords:', err);
         }
     }
 
@@ -229,9 +183,8 @@ const app = (() => {
                                 ${r.extinto}
                             </h3>
                             <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-sm text-coovilros-text-secondary">
-                                <span>${formatDate(r.nacimiento)}</span>
-                                <span class="text-coovilros-text-secondary/40">·</span>
-                                <span>${formatDate(r.defuncion)}</span>
+                                ${r.nacimiento ? '<span>' + formatDate(r.nacimiento) + '</span><span class="text-coovilros-text-secondary/40">·</span>' : ''}
+                                ${r.defuncion ? '<span>' + formatDate(r.defuncion) + '</span>' : ''}
                             </div>
                             <div class="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
                                  style="background: ${sectorColor}18; color: ${sectorColor}; border: 1px solid ${sectorColor}40;">
@@ -261,47 +214,33 @@ const app = (() => {
         });
     }
 
-    // ------------------------------------------------------------------------
-    //  VISTA B — Ficha del fallecido + Mapa
-    // ------------------------------------------------------------------------
-
     async function showMapView(recordId) {
         const record = await window.fetchParcelaById(recordId);
         if (!record) return;
 
-        // 1. Actualizar encabezado de ficha
         dom.recordName.textContent     = record.extinto;
         dom.recordBirthTxt.textContent = formatDate(record.nacimiento);
         dom.recordDeathTxt.textContent = formatDate(record.defuncion);
         dom.recordSector.textContent   = record.sector;
 
-        // 2. Conmutar vistas
         dom.viewSearch.classList.add("hidden");
         dom.viewMap.classList.remove("hidden");
 
-        // 3. Construir URL de Google Maps (navegación externa — NO consume API)
         dom.btnGoogleMaps.href =
             `https://www.google.com/maps/dir/?api=1&destination=${record.latitud},${record.longitud}&travelmode=walking`;
 
-        // 4. Inicializar o actualizar mapa
         if (!map) {
             initMap(record);
         } else {
             updateMapForRecord(record);
         }
 
-        // Forzar recálculo del tamaño del mapa (crucial tras display:none → block)
         setTimeout(() => {
             if (map) google.maps.event.trigger(map, "resize");
         }, 200);
 
-        // 5. Intentar geolocalización
         setupGeolocation(record.latitud, record.longitud);
     }
-
-    // ------------------------------------------------------------------------
-    //  Mapa Google Maps
-    // ------------------------------------------------------------------------
 
     function initMap(record) {
         map = new google.maps.Map(dom.mapContainer, {
@@ -329,23 +268,13 @@ const app = (() => {
             rotateControl: false,
             tilt: 0,
             gestureHandling: "greedy",
-            // Desactivar POIs y labels para no distraer
             styles: [
-                {
-                    featureType: "poi",
-                    stylers: [{ visibility: "off" }]
-                },
-                {
-                    featureType: "transit",
-                    stylers: [{ visibility: "off" }]
-                }
+                { featureType: "poi",     stylers: [{ visibility: "off" }] },
+                { featureType: "transit", stylers: [{ visibility: "off" }] }
             ]
         });
 
-        // ---- Marcador objetivo (parcela) ----
         placeTargetMarker(record);
-
-        // ---- Geolocalización ----
         currentTargetCoords = { lat: record.latitud, lng: record.longitud };
 
         if (gpsAvailable) {
@@ -355,21 +284,17 @@ const app = (() => {
         }
     }
 
-    /**
-     * Coloca (o reemplaza) el marcador de la parcela en el mapa.
-     */
+    /** Coloca o reemplaza el marcador de la parcela en el mapa. */
     function placeTargetMarker(record) {
-        // Remover marcador anterior
         if (targetMarker) targetMarker.setMap(null);
         if (targetInfoWindow) targetInfoWindow.close();
 
         const position = { lat: record.latitud, lng: record.longitud };
         const color = getSectorColor(record.sector);
 
-        // Marker clásico con icono SVG custom (reemplaza el pin por defecto)
         targetMarker = new google.maps.Marker({
-            position: position,
-            map: map,
+            position,
+            map,
             title: record.extinto,
             icon: {
                 url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(
@@ -385,41 +310,26 @@ const app = (() => {
             zIndex: 100
         });
 
-        targetInfoWindow = new google.maps.InfoWindow({
-            content: buildInfoWindowHTML(record)
-        });
-
+        targetInfoWindow = new google.maps.InfoWindow({ content: buildInfoWindowHTML(record) });
         targetMarker.addListener("click", () => {
             targetInfoWindow.open(map, targetMarker);
         });
     }
 
-    /**
-     * Actualiza el mapa para un nuevo registro.
-     */
     function updateMapForRecord(record) {
         if (!map) return;
 
         const newPos = { lat: record.latitud, lng: record.longitud };
 
-        // Reemplazar marcador
         placeTargetMarker(record);
-        targetInfoWindow.open({
-            anchor: targetMarker,
-            map: map,
-            shouldFocus: false
-        });
+        targetInfoWindow.open({ anchor: targetMarker, map, shouldFocus: false });
 
         currentTargetCoords = newPos;
-
-        // Re-centrar
         map.panTo(newPos);
         map.setZoom(ZOOM_TARGET);
 
-        // Recalcular distancia si hay GPS activo
         if (gpsAvailable && userMarker) {
-            const userPos = userMarker.getPosition ? userMarker.getPosition() :
-                           (userMarker.position || null);
+            const userPos = userMarker.getPosition ? userMarker.getPosition() : (userMarker.position || null);
             if (userPos) {
                 updateDistanceAndLine(
                     { lat: userPos.lat(), lng: userPos.lng() },
@@ -429,13 +339,8 @@ const app = (() => {
             }
         }
 
-        // Forzar recálculo de tamaño
         setTimeout(() => google.maps.event.trigger(map, "resize"), 100);
     }
-
-    // ------------------------------------------------------------------------
-    //  Geolocalización
-    // ------------------------------------------------------------------------
 
     function setupGeolocation(targetLat, targetLng) {
         if (geolocationWatcher !== null) {
@@ -451,7 +356,6 @@ const app = (() => {
             return;
         }
 
-        // Posición rápida inicial
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 gpsAvailable = true;
@@ -465,7 +369,6 @@ const app = (() => {
             { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
         );
 
-        // Rastreo continuo
         geolocationWatcher = navigator.geolocation.watchPosition(
             (pos) => {
                 const { latitude: lat, longitude: lng } = pos.coords;
@@ -485,29 +388,26 @@ const app = (() => {
     function onGpsPositionAvailable(userLat, userLng, targetLat, targetLng) {
         if (!map) return;
         drawUserElementsOnMap(userLat, userLng);
-        // Solo actualizar badge y línea, SIN mover el zoom
         updateDistanceAndLine({ lat: userLat, lng: userLng }, targetLat, targetLng, false);
     }
 
     /**
-     * Dibuja o actualiza el marcador del usuario.
-     * Solo mueve el marker existente si ya existe; no crea círculo.
+     * Dibuja o actualiza el marcador del usuario en el mapa.
+     * Si ya existe, solo mueve la posición.
      */
     function drawUserElementsOnMap(userLat, userLng) {
         if (!map) return;
 
         const position = { lat: userLat, lng: userLng };
 
-        // Si ya existe, solo mover (sin recrear)
         if (userMarker) {
             userMarker.setPosition(position);
             return;
         }
 
-        // Primera vez: crear círculo azul
         userMarker = new google.maps.Marker({
-            position: position,
-            map: map,
+            position,
+            map,
             icon: {
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 10,
@@ -520,10 +420,7 @@ const app = (() => {
         });
     }
 
-    /**
-     * Actualiza SOLO el badge de distancia y la línea punteada.
-     * No toca zoom ni marcadores.
-     */
+    /** Actualiza solo el texto del badge de distancia. */
     function updateBadgeOnly(userLatLng, targetLat, targetLng) {
         if (!map) return;
 
@@ -533,10 +430,8 @@ const app = (() => {
     }
 
     /**
-     * Dibuja la línea punteada (solo punteada, sin trazo base) y
-     * actualiza el badge de distancia.
-     *
-     * @param {boolean} [fitBounds=true]  Ajusta zoom solo en la primera llamada.
+     * Dibuja la línea punteada y actualiza el badge de distancia.
+     * @param {boolean} [fitBounds=true] — Ajusta zoom solo en la primera llamada.
      */
     function updateDistanceAndLine(userLatLng, targetLat, targetLng, fitBounds = true) {
         if (!map) return;
@@ -544,19 +439,16 @@ const app = (() => {
         const userPos = new google.maps.LatLng(userLatLng.lat, userLatLng.lng);
         const targetPos = new google.maps.LatLng(targetLat, targetLng);
 
-        // Remover línea anterior
         if (routeLine) routeLine.setMap(null);
 
-        // Calcular distancia
         const distanceMeters = haversineDistance(userLatLng.lat, userLatLng.lng, targetLat, targetLng);
         dom.distanceValue.textContent = `Estás a ${formatDistance(distanceMeters)} del objetivo`;
         showDistanceBadge();
 
-        // Línea punteada (sin stroke base, solo icons)
         routeLine = new google.maps.Polyline({
             path: [userPos, targetPos],
             geodesic: true,
-            strokeOpacity: 0,  // Sin trazo base
+            strokeOpacity: 0,
             icons: [{
                 icon: {
                     path: "M 0,-1.5 0,1.5",
@@ -567,10 +459,9 @@ const app = (() => {
                 offset: "0",
                 repeat: "16px"
             }],
-            map: map
+            map
         });
 
-        // Ajustar zoom solo cuando se pide explícitamente
         if (fitBounds) {
             const bounds = new google.maps.LatLngBounds();
             bounds.extend(userPos);
@@ -579,21 +470,15 @@ const app = (() => {
         }
     }
 
-    // ------------------------------------------------------------------------
-    //  Refresco periódico del badge de distancia (cada 1 segundo)
-    // ------------------------------------------------------------------------
-
     function startDistanceUpdates() {
         stopDistanceUpdates();
         distanceUpdateTimer = setInterval(() => {
             if (gpsAvailable && userMarker && currentTargetCoords) {
-                const pos = userMarker.getPosition ? userMarker.getPosition() :
-                           (userMarker.position || null);
+                const pos = userMarker.getPosition ? userMarker.getPosition() : (userMarker.position || null);
                 if (pos) {
                     const userLatLng = typeof pos.lat === "function"
                         ? { lat: pos.lat(), lng: pos.lng() }
                         : { lat: pos.lat, lng: pos.lng };
-                    // Solo actualizar el texto del badge, sin tocar el mapa
                     updateBadgeOnly(userLatLng, currentTargetCoords.lat, currentTargetCoords.lng);
                 }
             }
@@ -606,10 +491,6 @@ const app = (() => {
             distanceUpdateTimer = null;
         }
     }
-
-    // ------------------------------------------------------------------------
-    //  UI helpers
-    // ------------------------------------------------------------------------
 
     function showDistanceBadge() {
         dom.distanceBadge.classList.remove("hidden");
@@ -628,16 +509,13 @@ const app = (() => {
         dom.gpsWarning.classList.add("hidden");
     }
 
-    // ------------------------------------------------------------------------
-    //  Inicialización
-    // ------------------------------------------------------------------------
-
     function initApp() {
-        filterRecords("");
+        console.log('[App] initApp — DOM:', dom.searchInput ? 'OK' : 'FALTA', '| fetchParcelas:', typeof window.fetchParcelas);
 
-        dom.searchInput.addEventListener("input", (e) => {
-            filterRecords(e.target.value);
-        });
+        if (!dom.searchInput || !dom.searchBtn) {
+            console.error('[App] Elementos DOM no encontrados. Verificar IDs en index.html');
+            return;
+        }
 
         dom.searchBtn.addEventListener("click", () => {
             filterRecords(dom.searchInput.value);
@@ -652,7 +530,6 @@ const app = (() => {
 
         dom.btnBack.addEventListener("click", goHome);
 
-        // Refresco del mapa en resize de ventana
         let resizeTimer;
         window.addEventListener("resize", () => {
             clearTimeout(resizeTimer);
@@ -664,10 +541,6 @@ const app = (() => {
         });
     }
 
-    // ------------------------------------------------------------------------
-    // Público
-    // ------------------------------------------------------------------------
-
     return {
         initApp,
         goHome,
@@ -676,5 +549,4 @@ const app = (() => {
         showMapView,
         setupGeolocation
     };
-
 })();
