@@ -15628,7 +15628,7 @@ const parcelas = [
   },
   {
     "id": 1562,
-    "extinto": "JULIO E RIVIÈRE",
+    "extinto": "JULIO E RIVIÃRE",
     "sector": "AMARILLO",
     "lote": "44",
     "nro": "51",
@@ -15638,7 +15638,7 @@ const parcelas = [
   },
   {
     "id": 1563,
-    "extinto": "FLORENTINA VDA. DE RIVIÈRE",
+    "extinto": "FLORENTINA VDA. DE RIVIÃRE",
     "sector": "AMARILLO",
     "lote": "44",
     "nro": "51",
@@ -15938,7 +15938,7 @@ const parcelas = [
   },
   {
     "id": 1593,
-    "extinto": "LUDUEÑAMARIA ROSA",
+    "extinto": "LUDUEÑA MARIA ROSA",
     "sector": "AMARILLO",
     "lote": "44",
     "nro": "71",
@@ -16178,7 +16178,7 @@ const parcelas = [
   },
   {
     "id": 1617,
-    "extinto": "GÜIZZO TOMAS",
+    "extinto": "GÃIZZO TOMAS",
     "sector": "AMARILLO",
     "lote": "45",
     "nro": "1",
@@ -23548,7 +23548,7 @@ const parcelas = [
   },
   {
     "id": 2354,
-    "extinto": "RUBÉN  GERARDO  CACIORGNA",
+    "extinto": "RUBÃN  GERARDO  CACIORGNA",
     "sector": "VERDE",
     "lote": "27",
     "nro": "28",
