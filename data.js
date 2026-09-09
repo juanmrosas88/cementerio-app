@@ -308,7 +308,7 @@ const parcelas = [
   },
   {
     "id": 30,
-    "extinto": "MUÃOZ  RODOLFO",
+    "extinto": "MUÑOZ  RODOLFO",
     "sector": "VIOLETA",
     "lote": "3",
     "nro": "21",
@@ -728,7 +728,7 @@ const parcelas = [
   },
   {
     "id": 72,
-    "extinto": "ROSA LIRIA LUDUEÃA",
+    "extinto": "ROSA LIRIA LUDUEÑA",
     "sector": "VIOLETA",
     "lote": "3",
     "nro": "180",
@@ -1328,7 +1328,7 @@ const parcelas = [
   },
   {
     "id": 132,
-    "extinto": "IRMA VALENTINA LUDUEÃA",
+    "extinto": "IRMA VALENTINA LUDUEÑA",
     "sector": "NARANJA",
     "lote": "8",
     "nro": "4",
@@ -1388,7 +1388,7 @@ const parcelas = [
   },
   {
     "id": 138,
-    "extinto": "LUDUEÃA TEODOLINA",
+    "extinto": "LUDUEÑA TEODOLINA",
     "sector": "NARANJA",
     "lote": "8",
     "nro": "6",
@@ -1648,7 +1648,7 @@ const parcelas = [
   },
   {
     "id": 164,
-    "extinto": "JOSE  ANGEL  LUDUEÃA",
+    "extinto": "JOSE  ANGEL  LUDUEÑA",
     "sector": "NARANJA",
     "lote": "9",
     "nro": "9",
@@ -1768,7 +1768,7 @@ const parcelas = [
   },
   {
     "id": 176,
-    "extinto": "LUDUEÃA JULIO",
+    "extinto": "LUDUEÑA JULIO",
     "sector": "NARANJA",
     "lote": "9",
     "nro": "20",
@@ -2358,7 +2358,7 @@ const parcelas = [
   },
   {
     "id": 235,
-    "extinto": "PABLA  ISABEL  LUDUEÃA",
+    "extinto": "PABLA  ISABEL  LUDUEÑA",
     "sector": "NARANJA",
     "lote": "14",
     "nro": "1",
@@ -2558,7 +2558,7 @@ const parcelas = [
   },
   {
     "id": 255,
-    "extinto": "LUDUEÃA VIVIANA DEL VALLE",
+    "extinto": "LUDUEÑA VIVIANA DEL VALLE",
     "sector": "NARANJA",
     "lote": "18",
     "nro": "7",
@@ -2718,7 +2718,7 @@ const parcelas = [
   },
   {
     "id": 271,
-    "extinto": "LUDUEÃA-LUQUE ANGEL VALENTIN",
+    "extinto": "LUDUEÑA-LUQUE ANGEL VALENTIN",
     "sector": "NARANJA",
     "lote": "18",
     "nro": "22",
@@ -3758,7 +3758,7 @@ const parcelas = [
   },
   {
     "id": 375,
-    "extinto": "AGUSTINA LUDUEÃA",
+    "extinto": "AGUSTINA LUDUEÑA",
     "sector": "NARANJA",
     "lote": "20",
     "nro": "14",
@@ -3928,7 +3928,7 @@ const parcelas = [
   },
   {
     "id": 392,
-    "extinto": "LUDUEÃA ROSA LIDIA",
+    "extinto": "LUDUEÑA ROSA LIDIA",
     "sector": "NARANJA",
     "lote": "20",
     "nro": "25",
@@ -4548,7 +4548,7 @@ const parcelas = [
   },
   {
     "id": 454,
-    "extinto": "LUDUEÃA POLONIA ARSENIA",
+    "extinto": "LUDUEÑA POLONIA ARSENIA",
     "sector": "NARANJA",
     "lote": "21",
     "nro": "44",
@@ -4628,7 +4628,7 @@ const parcelas = [
   },
   {
     "id": 462,
-    "extinto": "LUDUEÃA MARIA FRANCISCA",
+    "extinto": "LUDUEÑA MARIA FRANCISCA",
     "sector": "NARANJA",
     "lote": "21",
     "nro": "47",
@@ -6808,7 +6808,7 @@ const parcelas = [
   },
   {
     "id": 680,
-    "extinto": "ALICIA CRISTINA VILLAFAÃE",
+    "extinto": "ALICIA CRISTINA VILLAFAÑE",
     "sector": "NARANJA",
     "lote": "24",
     "nro": "25",
@@ -6818,7 +6818,7 @@ const parcelas = [
   },
   {
     "id": 681,
-    "extinto": "ROSARIO DAMIAN VILLAFAÃE",
+    "extinto": "ROSARIO DAMIAN VILLAFAÑE",
     "sector": "NARANJA",
     "lote": "24",
     "nro": "25",
@@ -6828,7 +6828,7 @@ const parcelas = [
   },
   {
     "id": 682,
-    "extinto": "LUDUEÃA JOSE LUIS",
+    "extinto": "LUDUEÑA JOSE LUIS",
     "sector": "NARANJA",
     "lote": "24",
     "nro": "26",
@@ -7488,7 +7488,7 @@ const parcelas = [
   },
   {
     "id": 748,
-    "extinto": "LUDUEÃA ELVIO ARGENTINO",
+    "extinto": "LUDUEÑA ELVIO ARGENTINO",
     "sector": "NARANJA",
     "lote": "24",
     "nro": "76",
@@ -7538,7 +7538,7 @@ const parcelas = [
   },
   {
     "id": 753,
-    "extinto": "LUDEUÃA CANDIDO ERNESTO",
+    "extinto": "LUDEUÑA CANDIDO ERNESTO",
     "sector": "NARANJA",
     "lote": "24",
     "nro": "81",
@@ -7558,7 +7558,7 @@ const parcelas = [
   },
   {
     "id": 755,
-    "extinto": "LUDUEÃA CANDIDO",
+    "extinto": "LUDUEÑA CANDIDO",
     "sector": "NARANJA",
     "lote": "24",
     "nro": "82",
@@ -7568,7 +7568,7 @@ const parcelas = [
   },
   {
     "id": 756,
-    "extinto": "ARGUELLO DE LUDUEÃA ROSARIO",
+    "extinto": "ARGUELLO DE LUDUEÑA ROSARIO",
     "sector": "NARANJA",
     "lote": "24",
     "nro": "82",
@@ -7578,7 +7578,7 @@ const parcelas = [
   },
   {
     "id": 757,
-    "extinto": "LUDUEÃA RAMON AMERICO",
+    "extinto": "LUDUEÑA RAMON AMERICO",
     "sector": "NARANJA",
     "lote": "24",
     "nro": "82",
@@ -7588,7 +7588,7 @@ const parcelas = [
   },
   {
     "id": 758,
-    "extinto": "LUDUEÃA JUSTO GERMAN",
+    "extinto": "LUDUEÑA JUSTO GERMAN",
     "sector": "NARANJA",
     "lote": "24",
     "nro": "82",
@@ -7598,7 +7598,7 @@ const parcelas = [
   },
   {
     "id": 759,
-    "extinto": "LUDUEÃA GERMAN",
+    "extinto": "LUDUEÑA GERMAN",
     "sector": "NARANJA",
     "lote": "24",
     "nro": "82",
@@ -7718,7 +7718,7 @@ const parcelas = [
   },
   {
     "id": 771,
-    "extinto": "LUDUEÃA DANIEL FLORENCIO",
+    "extinto": "LUDUEÑA DANIEL FLORENCIO",
     "sector": "NARANJA",
     "lote": "26",
     "nro": "24",
@@ -7738,7 +7738,7 @@ const parcelas = [
   },
   {
     "id": 773,
-    "extinto": "LUDUEÃA JORGE ALBERTO",
+    "extinto": "LUDUEÑA JORGE ALBERTO",
     "sector": "NARANJA",
     "lote": "26",
     "nro": "25",
@@ -7798,7 +7798,7 @@ const parcelas = [
   },
   {
     "id": 779,
-    "extinto": "MAÃAY JUSTO ELIAS",
+    "extinto": "MAÑAY JUSTO ELIAS",
     "sector": "NARANJA",
     "lote": "26",
     "nro": "30",
@@ -7808,7 +7808,7 @@ const parcelas = [
   },
   {
     "id": 780,
-    "extinto": "MAÃAY MIRIAM ELENA",
+    "extinto": "MAÑAY MIRIAM ELENA",
     "sector": "NARANJA",
     "lote": "26",
     "nro": "30",
@@ -7818,7 +7818,7 @@ const parcelas = [
   },
   {
     "id": 781,
-    "extinto": "LUDUEÃA JOSE RAMON",
+    "extinto": "LUDUEÑA JOSE RAMON",
     "sector": "NARANJA",
     "lote": "26",
     "nro": "38",
@@ -7838,7 +7838,7 @@ const parcelas = [
   },
   {
     "id": 783,
-    "extinto": "LUDUEÃA ROGELIO",
+    "extinto": "LUDUEÑA ROGELIO",
     "sector": "NARANJA",
     "lote": "26",
     "nro": "40",
@@ -7868,7 +7868,7 @@ const parcelas = [
   },
   {
     "id": 786,
-    "extinto": "RAMONA QUINTINA LUDUEÃA",
+    "extinto": "RAMONA QUINTINA LUDUEÑA",
     "sector": "NARANJA",
     "lote": "26",
     "nro": "40",
@@ -8338,7 +8338,7 @@ const parcelas = [
   },
   {
     "id": 833,
-    "extinto": "MONTAÃA FAUSTINO",
+    "extinto": "MONTAÑA FAUSTINO",
     "sector": "VERDE",
     "lote": "28",
     "nro": "160",
@@ -8568,7 +8568,7 @@ const parcelas = [
   },
   {
     "id": 856,
-    "extinto": "LUDUEÃA ROBERTA EMILIA",
+    "extinto": "LUDUEÑA ROBERTA EMILIA",
     "sector": "VERDE",
     "lote": "30",
     "nro": "70",
@@ -8718,7 +8718,7 @@ const parcelas = [
   },
   {
     "id": 871,
-    "extinto": "DOMINGO LUIS LUDUEÃA",
+    "extinto": "DOMINGO LUIS LUDUEÑA",
     "sector": "VERDE",
     "lote": "31",
     "nro": "131",
@@ -9118,7 +9118,7 @@ const parcelas = [
   },
   {
     "id": 911,
-    "extinto": "MIGUEL ANGEL LUDUEÃA",
+    "extinto": "MIGUEL ANGEL LUDUEÑA",
     "sector": "VERDE",
     "lote": "32",
     "nro": "116",
@@ -9348,7 +9348,7 @@ const parcelas = [
   },
   {
     "id": 934,
-    "extinto": "JORGE  OMAR  VILLAFAÃE",
+    "extinto": "JORGE  OMAR  VILLAFAÑE",
     "sector": "VERDE",
     "lote": "33",
     "nro": "25",
@@ -9668,7 +9668,7 @@ const parcelas = [
   },
   {
     "id": 966,
-    "extinto": "JUAN LUIS GUDIÃO",
+    "extinto": "JUAN LUIS GUDIÑO",
     "sector": "VERDE",
     "lote": "33",
     "nro": "51",
@@ -9798,7 +9798,7 @@ const parcelas = [
   },
   {
     "id": 979,
-    "extinto": "GLADYS BEATRIZ ACUÃA",
+    "extinto": "GLADYS BEATRIZ ACUÑA",
     "sector": "VERDE",
     "lote": "34",
     "nro": "5",
@@ -9868,7 +9868,7 @@ const parcelas = [
   },
   {
     "id": 986,
-    "extinto": "EDIT DEL VALLE MUÃOZ",
+    "extinto": "EDIT DEL VALLE MUÑOZ",
     "sector": "VERDE",
     "lote": "34",
     "nro": "10",
@@ -10538,7 +10538,7 @@ const parcelas = [
   },
   {
     "id": 1053,
-    "extinto": "VILLAFAÃE RUBEN ABELARDO",
+    "extinto": "VILLAFAÑE RUBEN ABELARDO",
     "sector": "VERDE",
     "lote": "35",
     "nro": "15",
@@ -10548,7 +10548,7 @@ const parcelas = [
   },
   {
     "id": 1054,
-    "extinto": "VILLAFAÃE PABLA TERESA DE",
+    "extinto": "VILLAFAÑE PABLA TERESA DE",
     "sector": "VERDE",
     "lote": "35",
     "nro": "15",
@@ -10558,7 +10558,7 @@ const parcelas = [
   },
   {
     "id": 1055,
-    "extinto": "VILLAFAÃE MIGUEL ANGEL",
+    "extinto": "VILLAFAÑE MIGUEL ANGEL",
     "sector": "VERDE",
     "lote": "35",
     "nro": "15",
@@ -10648,7 +10648,7 @@ const parcelas = [
   },
   {
     "id": 1064,
-    "extinto": "LUDUEÃA ALBERTO JOES",
+    "extinto": "LUDUEÑA ALBERTO JOES",
     "sector": "VERDE",
     "lote": "36",
     "nro": "3",
@@ -11148,7 +11148,7 @@ const parcelas = [
   },
   {
     "id": 1114,
-    "extinto": "GRACIELA DEL VALLE VILLAFAÃE",
+    "extinto": "GRACIELA DEL VALLE VILLAFAÑE",
     "sector": "VERDE",
     "lote": "37",
     "nro": "26",
@@ -11258,7 +11258,7 @@ const parcelas = [
   },
   {
     "id": 1125,
-    "extinto": "VILLAFAÃE OSCAR",
+    "extinto": "VILLAFAÑE OSCAR",
     "sector": "VERDE",
     "lote": "37",
     "nro": "36",
@@ -11268,7 +11268,7 @@ const parcelas = [
   },
   {
     "id": 1126,
-    "extinto": "VILLAFAÃE PIO OSCAR",
+    "extinto": "VILLAFAÑE PIO OSCAR",
     "sector": "VERDE",
     "lote": "37",
     "nro": "36",
@@ -11998,7 +11998,7 @@ const parcelas = [
   },
   {
     "id": 1199,
-    "extinto": "LUDUEÃA MARIA JULIANA",
+    "extinto": "LUDUEÑA MARIA JULIANA",
     "sector": "VERDE",
     "lote": "38",
     "nro": "87",
@@ -12018,7 +12018,7 @@ const parcelas = [
   },
   {
     "id": 1201,
-    "extinto": "ATANACIO  MAXIMO  LUDUEÃA",
+    "extinto": "ATANACIO  MAXIMO  LUDUEÑA",
     "sector": "VERDE",
     "lote": "38",
     "nro": "90",
@@ -12028,7 +12028,7 @@ const parcelas = [
   },
   {
     "id": 1202,
-    "extinto": "VICTOR  SARGIO  LUDUEÃA",
+    "extinto": "VICTOR  SARGIO  LUDUEÑA",
     "sector": "VERDE",
     "lote": "38",
     "nro": "90",
@@ -12168,7 +12168,7 @@ const parcelas = [
   },
   {
     "id": 1216,
-    "extinto": "LUDUEÃA ANGEL HECTOR",
+    "extinto": "LUDUEÑA ANGEL HECTOR",
     "sector": "VERDE",
     "lote": "38",
     "nro": "109",
@@ -12178,7 +12178,7 @@ const parcelas = [
   },
   {
     "id": 1217,
-    "extinto": "MARCELO JAVIER LUDUEÃA",
+    "extinto": "MARCELO JAVIER LUDUEÑA",
     "sector": "VERDE",
     "lote": "38",
     "nro": "111",
@@ -13368,7 +13368,7 @@ const parcelas = [
   },
   {
     "id": 1336,
-    "extinto": "ACUÃA VICENTE",
+    "extinto": "ACUÑA VICENTE",
     "sector": "AMARILLO",
     "lote": "41",
     "nro": "31",
@@ -13998,7 +13998,7 @@ const parcelas = [
   },
   {
     "id": 1399,
-    "extinto": "BENEDICTO MUÃOZ",
+    "extinto": "BENEDICTO MUÑOZ",
     "sector": "AMARILLO",
     "lote": "42",
     "nro": "23",
@@ -14008,7 +14008,7 @@ const parcelas = [
   },
   {
     "id": 1400,
-    "extinto": "TERESA DEIDERI DE MUÃOZ",
+    "extinto": "TERESA DEIDERI DE MUÑOZ",
     "sector": "AMARILLO",
     "lote": "42",
     "nro": "23",
@@ -14018,7 +14018,7 @@ const parcelas = [
   },
   {
     "id": 1401,
-    "extinto": "MANUEL MUÃOZ",
+    "extinto": "MANUEL MUÑOZ",
     "sector": "AMARILLO",
     "lote": "42",
     "nro": "23",
@@ -14168,7 +14168,7 @@ const parcelas = [
   },
   {
     "id": 1416,
-    "extinto": "TERESA LEONTINA LUDUEÃA",
+    "extinto": "TERESA LEONTINA LUDUEÑA",
     "sector": "AMARILLO",
     "lote": "42",
     "nro": "33",
@@ -14368,7 +14368,7 @@ const parcelas = [
   },
   {
     "id": 1436,
-    "extinto": "LUDUEÃA ELVIO OSCAR",
+    "extinto": "LUDUEÑA ELVIO OSCAR",
     "sector": "AMARILLO",
     "lote": "43",
     "nro": "8",
@@ -14918,7 +14918,7 @@ const parcelas = [
   },
   {
     "id": 1491,
-    "extinto": "LUDUEÃA ALEJANDRO",
+    "extinto": "LUDUEÑA ALEJANDRO",
     "sector": "AMARILLO",
     "lote": "43",
     "nro": "38",
@@ -14928,7 +14928,7 @@ const parcelas = [
   },
   {
     "id": 1492,
-    "extinto": "LUDUEÃA JULIO ALEJANDRO",
+    "extinto": "LUDUEÑA JULIO ALEJANDRO",
     "sector": "AMARILLO",
     "lote": "43",
     "nro": "38",
@@ -15228,7 +15228,7 @@ const parcelas = [
   },
   {
     "id": 1522,
-    "extinto": "MARIA ISABEL LUDUEÃA",
+    "extinto": "MARIA ISABEL LUDUEÑA",
     "sector": "AMARILLO",
     "lote": "44",
     "nro": "18",
@@ -15418,7 +15418,7 @@ const parcelas = [
   },
   {
     "id": 1541,
-    "extinto": "VIRGIÃO ALBERTO CACIORGNA",
+    "extinto": "VIRGIÑO ALBERTO CACIORGNA",
     "sector": "AMARILLO",
     "lote": "44",
     "nro": "37",
@@ -15628,7 +15628,7 @@ const parcelas = [
   },
   {
     "id": 1562,
-    "extinto": "JULIO E RIVIÃRE",
+    "extinto": "JULIO E RIVIÈRE",
     "sector": "AMARILLO",
     "lote": "44",
     "nro": "51",
@@ -15638,7 +15638,7 @@ const parcelas = [
   },
   {
     "id": 1563,
-    "extinto": "FLORENTINA VDA. DE RIVIÃRE",
+    "extinto": "FLORENTINA VDA. DE RIVIÈRE",
     "sector": "AMARILLO",
     "lote": "44",
     "nro": "51",
@@ -15938,7 +15938,7 @@ const parcelas = [
   },
   {
     "id": 1593,
-    "extinto": "LUDUEÃAMARIA ROSA",
+    "extinto": "LUDUEÑAMARIA ROSA",
     "sector": "AMARILLO",
     "lote": "44",
     "nro": "71",
@@ -16178,7 +16178,7 @@ const parcelas = [
   },
   {
     "id": 1617,
-    "extinto": "GÃIZZO TOMAS",
+    "extinto": "GÜIZZO TOMAS",
     "sector": "AMARILLO",
     "lote": "45",
     "nro": "1",
@@ -16538,7 +16538,7 @@ const parcelas = [
   },
   {
     "id": 1653,
-    "extinto": "LUDUEÃA SARA FELISA",
+    "extinto": "LUDUEÑA SARA FELISA",
     "sector": "AMARILLO",
     "lote": "45",
     "nro": "28",
@@ -16718,7 +16718,7 @@ const parcelas = [
   },
   {
     "id": 1671,
-    "extinto": "AMADA GENOVEVA LUDUEÃA",
+    "extinto": "AMADA GENOVEVA LUDUEÑA",
     "sector": "AMARILLO",
     "lote": "46",
     "nro": "10",
@@ -17828,7 +17828,7 @@ const parcelas = [
   },
   {
     "id": 1782,
-    "extinto": "LUDUEÃA ROBERTO GABRIEL",
+    "extinto": "LUDUEÑA ROBERTO GABRIEL",
     "sector": "AMARILLO",
     "lote": "49",
     "nro": "11",
@@ -17908,7 +17908,7 @@ const parcelas = [
   },
   {
     "id": 1790,
-    "extinto": "MARIA TERESA GUDIÃO",
+    "extinto": "MARIA TERESA GUDIÑO",
     "sector": "AMARILLO",
     "lote": "50",
     "nro": "1",
@@ -17998,7 +17998,7 @@ const parcelas = [
   },
   {
     "id": 1799,
-    "extinto": "JUANA CLEMIRA LUDUEÃA",
+    "extinto": "JUANA CLEMIRA LUDUEÑA",
     "sector": "AMARILLO",
     "lote": "50",
     "nro": "8",
@@ -18018,7 +18018,7 @@ const parcelas = [
   },
   {
     "id": 1801,
-    "extinto": "LUDUEÃA CARMEN MERCEDES",
+    "extinto": "LUDUEÑA CARMEN MERCEDES",
     "sector": "AMARILLO",
     "lote": "50",
     "nro": "10",
@@ -18328,7 +18328,7 @@ const parcelas = [
   },
   {
     "id": 1832,
-    "extinto": "ESPAÃOM MIRIAM HORTENCIA",
+    "extinto": "ESPAÑOM MIRIAM HORTENCIA",
     "sector": "AMARILLO",
     "lote": "50",
     "nro": "31",
@@ -18588,7 +18588,7 @@ const parcelas = [
   },
   {
     "id": 1858,
-    "extinto": "SANTIAGO MANUEL LUDUEÃA",
+    "extinto": "SANTIAGO MANUEL LUDUEÑA",
     "sector": "AMARILLO",
     "lote": "57",
     "nro": "18",
@@ -18598,7 +18598,7 @@ const parcelas = [
   },
   {
     "id": 1859,
-    "extinto": "GASTON  LUDUEÃA  BARADAD",
+    "extinto": "GASTON  LUDUEÑA  BARADAD",
     "sector": "AMARILLO",
     "lote": "57",
     "nro": "18",
@@ -19288,7 +19288,7 @@ const parcelas = [
   },
   {
     "id": 1928,
-    "extinto": "BACILE LUDUEÃA EMMA",
+    "extinto": "BACILE LUDUEÑA EMMA",
     "sector": "AMARILLO",
     "lote": "60",
     "nro": "27",
@@ -19298,7 +19298,7 @@ const parcelas = [
   },
   {
     "id": 1929,
-    "extinto": "RAUL EDUARDO LUDUEÃA",
+    "extinto": "RAUL EDUARDO LUDUEÑA",
     "sector": "AMARILLO",
     "lote": "60",
     "nro": "29",
@@ -20288,7 +20288,7 @@ const parcelas = [
   },
   {
     "id": 2028,
-    "extinto": "MORUÃA JULIETA",
+    "extinto": "MORUÑA JULIETA",
     "sector": "AMARILLO",
     "lote": "62",
     "nro": "50",
@@ -21988,7 +21988,7 @@ const parcelas = [
   },
   {
     "id": 2198,
-    "extinto": "LUDUEÃA BLANCA ROSA",
+    "extinto": "LUDUEÑA BLANCA ROSA",
     "sector": "AMARILLO",
     "lote": "67",
     "nro": "20",
@@ -21998,7 +21998,7 @@ const parcelas = [
   },
   {
     "id": 2199,
-    "extinto": "LUDUEÃA HUMBERTO FERNANDO",
+    "extinto": "LUDUEÑA HUMBERTO FERNANDO",
     "sector": "AMARILLO",
     "lote": "67",
     "nro": "21",
@@ -23068,7 +23068,7 @@ const parcelas = [
   },
   {
     "id": 2306,
-    "extinto": "LUIS ERNESTO ARROÃADES",
+    "extinto": "LUIS ERNESTO ARROÑADES",
     "sector": "VERDE",
     "lote": "32",
     "nro": "152",
@@ -23548,7 +23548,7 @@ const parcelas = [
   },
   {
     "id": 2354,
-    "extinto": "RUBÃN  GERARDO  CACIORGNA",
+    "extinto": "RUBÉN  GERARDO  CACIORGNA",
     "sector": "VERDE",
     "lote": "27",
     "nro": "28",
@@ -23778,7 +23778,7 @@ const parcelas = [
   },
   {
     "id": 2377,
-    "extinto": "ALBA  ROSA  LUDUEÃA",
+    "extinto": "ALBA  ROSA  LUDUEÑA",
     "sector": "VERDE",
     "lote": "38",
     "nro": "15",
@@ -24958,7 +24958,7 @@ const parcelas = [
   },
   {
     "id": 2495,
-    "extinto": "JORGE  RAMON  ESPAÃON",
+    "extinto": "JORGE  RAMON  ESPAÑON",
     "sector": "AMARILLO",
     "lote": "50",
     "nro": "31",

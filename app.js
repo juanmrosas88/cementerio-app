@@ -1,6 +1,6 @@
 /**
  * app.js — Lógica principal de la SPA
- * Cementerio Parque Memorial — Coovilros Ltda.
+ * Jardín del Rosario - Cementerio Parque — Coovilros Ltda.
  *
  * Responsabilidades:
  *   - Conmutación de vistas (Búsqueda / Ficha+Mapa)
@@ -30,6 +30,7 @@ const app = (() => {
     let gpsAvailable        = false;
     let currentTargetCoords = null;
     let distanceUpdateTimer = null;
+    let totalRecords = null;
 
     const $ = (sel) => document.querySelector(sel);
 
@@ -46,6 +47,8 @@ const app = (() => {
         recordBirthTxt: $("#record-birth-text"),
         recordDeathTxt: $("#record-death-text"),
         recordSector:   $("#record-sector"),
+        recordLote:     $("#record-lote"),
+        recordParcela:  $("#record-parcela"),
         mapContainer:   $("#map-container"),
         distanceBadge:  $("#distance-badge"),
         distanceValue:  $("#distance-value"),
@@ -54,15 +57,11 @@ const app = (() => {
         btnGoogleMaps:  $("#btn-google-maps"),
     };
 
-    /** Formatea fecha ISO "YYYY-MM-DD" → "DD de MMMM de YYYY". */
+    /** Formatea fecha ISO "YYYY-MM-DD" → "DD/MM/YYYY". */
     function formatDate(isoDate) {
         if (!isoDate) return "—";
         const [y, m, d] = isoDate.split("-").map(Number);
-        const meses = [
-            "enero","febrero","marzo","abril","mayo","junio",
-            "julio","agosto","septiembre","octubre","noviembre","diciembre"
-        ];
-        return `${d} de ${meses[m - 1]} de ${y}`;
+        return `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`;
     }
 
     /** Redondea metros a entero y formatea con separador de miles. */
@@ -79,7 +78,7 @@ const app = (() => {
             'VERDE':    '#4CAF50',
             'VIOLETA':  '#9C27B0',
         };
-        return colorMap[sector] || (typeof getColorForSector === 'function' ? getColorForSector(sector) : '#888888');
+        return colorMap[sector] || (typeof getColorForSector === 'function' ? getColorForSector(sector) : '#0B6B3A');
     }
 
     /**
@@ -98,17 +97,17 @@ const app = (() => {
 
     /** HTML del InfoWindow para un registro. */
     function buildInfoWindowHTML(record) {
-        const sectorOrNivel = record.sector || record.nivel || '';
         return `
-            <div style="font-family: Inter, sans-serif; min-width: 170px; padding: 4px 0;">
-                <p style="font-weight:700; color:#0B6B3A; margin:0 0 4px; font-size:14px;">
+            <div style="font-family: Inter, sans-serif; min-width: 180px; padding: 6px 2px;">
+                <p style="font-weight:700; color:#0B6B3A; margin:0 0 6px; font-size:15px;">
                     ${record.extinto}
                 </p>
-                <p style="margin:2px 0; color:#666666; font-size:12px;">
-                    ${record.nacimiento ? formatDate(record.nacimiento) : ''}${record.defuncion ? ' — ' + formatDate(record.defuncion) : ''}
+                <p style="margin:2px 0; color:#555; font-size:12px;">
+                    ${record.nacimiento ? 'Nac. ' + formatDate(record.nacimiento) : ''}
+                    ${record.defuncion ? ' · Def. ' + formatDate(record.defuncion) : ''}
                 </p>
-                <p style="margin:2px 0; color:#0B6B3A; font-size:12px; font-weight:600;">
-                    ${sectorOrNivel}
+                <p style="margin:2px 0; color:#555; font-size:12px;">
+                    ${record.sector ? 'Sec. ' + record.sector + ' · ' : ''}Lot. ${record.lote || '-'} · Par. ${record.numero_parcela || record.id || '-'}
                 </p>
             </div>
         `;
@@ -125,8 +124,17 @@ const app = (() => {
     }
 
     async function filterRecords(query) {
+        // No buscar si el input está vacío
+        const trimmed = (query || '').trim();
+        if (!trimmed) {
+            dom.resultsGrid.innerHTML = "";
+            dom.resultsCount.classList.add("hidden");
+            dom.emptyState.classList.add("hidden");
+            return;
+        }
+
         try {
-            const records = await window.fetchParcelas(query);
+            const records = await window.fetchParcelas(trimmed);
 
             if (!records || !Array.isArray(records)) {
                 console.error('[App] fetchParcelas devolvió:', records);
@@ -138,12 +146,8 @@ const app = (() => {
             const count = records.length;
             const countEl = document.getElementById("results-count");
             const countVal = document.getElementById("results-count-value");
-            if (count > 0) {
-                countEl.classList.remove("hidden");
-                countVal.textContent = count;
-            } else {
-                countEl.classList.add("hidden");
-            }
+            countEl.classList.remove("hidden");
+            countVal.textContent = totalRecords !== null ? totalRecords.toLocaleString('es-AR') : count;
         } catch (err) {
             console.error('[App] Error en filterRecords:', err);
         }
@@ -160,47 +164,35 @@ const app = (() => {
 
         dom.emptyState.classList.add("hidden");
 
-        const html = records.map((r) => {
-            const sectorColor = r.color_sector || getSectorColor(r.sector || r.nivel);
-            const sectorName = r.sector || '';
+        const html = records.map((r, index) => {
             return `
-                <article class="group bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-coovilros-primary/8
-                                hover:shadow-md hover:border-coovilros-primary/20 transition-all duration-200 cursor-pointer
-                                hover:-translate-y-0.5 active:scale-[0.99]"
+                <article class="result-card"
                          data-id="${r.id}"
+                         data-record-index="${index}"
                          role="button"
                          tabindex="0"
                          aria-label="Ver ubicación de ${r.extinto}">
-                    <div class="flex items-start gap-3.5">
-                        <div class="flex-shrink-0 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-coovilros-icon-bg flex items-center justify-center">
-                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-coovilros-primary" fill="none" stroke="currentColor"
-                                 viewBox="0 0 24 24" stroke-width="1.6">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                      d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                                <circle cx="12" cy="9" r="2.5" fill="currentColor" stroke="none"/>
-                            </svg>
+                    <div class="card-name">${r.extinto}</div>
+                    <div class="card-data">
+                        <div class="data-row">
+                            <span class="data-label">Nac.</span>
+                            <span>${r.nacimiento ? formatDate(r.nacimiento) : '—'}</span>
                         </div>
-                        <div class="min-w-0 flex-1">
-                            <h3 class="font-bold text-coovilros-text text-base sm:text-lg leading-tight truncate">
-                                ${r.extinto}
-                            </h3>
-                            <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-sm text-coovilros-text-secondary">
-                                ${r.nacimiento ? '<span>Nac: ' + formatDate(r.nacimiento) + '</span><span class="text-coovilros-text-secondary/40">·</span>' : ''}
-                                ${r.defuncion ? '<span>Def: ' + formatDate(r.defuncion) + '</span>' : ''}
-                            </div>
-                            <div class="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
-                                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold"
-                                     style="background: ${sectorColor}18; color: ${sectorColor}; border: 1px solid ${sectorColor}40;">
-                                    <span class="w-1.5 h-1.5 rounded-full" style="background: ${sectorColor}"></span>
-                                    Sec: ${sectorName}
-                                </div>
-                                <div class="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-gray-700 border border-gray-200">
-                                    Lot: ${r.lote || '-'}
-                                </div>
-                                <div class="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-gray-700 border border-gray-200">
-                                    Par: ${r.numero_parcela || r.id || '-'}
-                                </div>
-                            </div>
+                        <div class="data-row">
+                            <span class="data-label">Def.</span>
+                            <span>${r.defuncion ? formatDate(r.defuncion) : '—'}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Sec.</span>
+                            <span>${r.sector || r.nivel || '—'}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Lot.</span>
+                            <span>${r.lote || '—'}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Par.</span>
+                            <span>${r.numero_parcela || r.nro || r.id || '—'}</span>
                         </div>
                     </div>
                 </article>
@@ -211,8 +203,9 @@ const app = (() => {
 
         grid.querySelectorAll("article").forEach((card) => {
             const handleActivate = () => {
-                const id = parseInt(card.dataset.id, 10);
-                showMapView(id);
+                // Usar el objeto exacto de la búsqueda evita colisiones cuando
+                // varias filas comparten el mismo número físico de parcela.
+                showMapView(records[Number(card.dataset.recordIndex)]);
             };
             card.addEventListener("click", handleActivate);
             card.addEventListener("keydown", (e) => {
@@ -224,14 +217,18 @@ const app = (() => {
         });
     }
 
-    async function showMapView(recordId) {
-        const record = await window.fetchParcelaById(recordId);
+    async function showMapView(recordOrId) {
+        const record = typeof recordOrId === "object"
+            ? recordOrId
+            : await window.fetchParcelaById(recordOrId);
         if (!record) return;
 
         dom.recordName.textContent     = record.extinto;
         dom.recordBirthTxt.textContent = formatDate(record.nacimiento);
         dom.recordDeathTxt.textContent = formatDate(record.defuncion);
-        dom.recordSector.textContent   = record.sector || record.nivel || '';
+        dom.recordSector.textContent   = record.sector || record.nivel || '—';
+        dom.recordLote.textContent     = record.lote || '—';
+        dom.recordParcela.textContent  = record.numero_parcela || record.nro || record.id || '—';
 
         dom.viewSearch.classList.add("hidden");
         dom.viewMap.classList.remove("hidden");
@@ -527,6 +524,13 @@ const app = (() => {
             return;
         }
 
+        // El contador es el total de registros de la base, no la cantidad filtrada.
+        window.fetchParcelas('').then((records) => {
+            totalRecords = Array.isArray(records) ? records.length : null;
+            const countVal = document.getElementById('results-count-value');
+            if (countVal && totalRecords !== null) countVal.textContent = totalRecords.toLocaleString('es-AR');
+        });
+
         dom.searchBtn.addEventListener("click", () => {
             filterRecords(dom.searchInput.value);
         });
@@ -560,3 +564,7 @@ const app = (() => {
         setupGeolocation
     };
 })();
+
+// API pública del módulo: bootstrap.js necesita iniciar la aplicación
+// después de que el DOM y Google Maps estén listos.
+window.app = app;

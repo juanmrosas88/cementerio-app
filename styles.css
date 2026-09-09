@@ -1,46 +1,34 @@
 /* ============================================================
-   styles.css — Reglas personalizadas y complemento de Tailwind
-   Módulo de Geolocalización y Búsqueda de Parcelas
-   Cementerio Parque Memorial — Coovilros Ltda.
+   styles.css — Estilos para Jardín del Rosario - Cementerio Parque
+   Rediseño institucional: verde, amarillo suave, blanco
+   Tipografía accesible para adultos mayores
    ============================================================ */
 
-/* ---------- Importación de tipografía Inter (si no cargó por CDN) ---------- */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* ---------- Variables de Diseño Coovilros ---------- */
+/* ---------- Variables de Diseño ---------- */
 :root {
-    /* Verdes institucionales */
-    --coovilros-primary:    #0B6B3A;
-    --coovilros-dark:        #005826;
-    --coovilros-action:      #00A859;
-    --coovilros-accent:      #4CAF50;
+    --jdr-green:        #0B6B3A;
+    --jdr-green-dark:   #005826;
+    --jdr-green-light:  #E8F5E9;
+    --jdr-green-soft:   #C8E6C9;
+    --jdr-yellow:       #FFF8E1;
+    --jdr-yellow-mid:   #FFD700;
+    --jdr-bg:           #F5F7F5;
+    --jdr-text:         #1A1A1A;
+    --jdr-text-sec:     #555555;
+    --jdr-white:        #FFFFFF;
 
-    /* Fondos e íconos */
-    --coovilros-icon-bg:     #E3F5E9;
-    --coovilros-bg:          #F4F6F8;
-    --coovilros-bg-alt:      #F8FAFC;
-
-    /* Textos */
-    --coovilros-text:        #222222;
-    --coovilros-text-sec:    #666666;
-    --coovilros-white:       #FFFFFF;
-
-    /* Sombras suaves estilo Coovilros */
-    --shadow-sm-custom:  0 1px 3px rgba(11,107,58,0.06), 0 1px 2px rgba(11,107,58,0.04);
-    --shadow-md-custom:  0 4px 12px rgba(11,107,58,0.08), 0 2px 4px rgba(11,107,58,0.04);
-    --shadow-lg-custom:  0 10px 30px rgba(11,107,58,0.10), 0 4px 8px rgba(11,107,58,0.06);
-
-    /* Bordes */
-    --radius-2xl: 1rem;
-    --radius-xl:  0.75rem;
+    --shadow-sm:  0 1px 3px rgba(11,107,58,0.08), 0 1px 2px rgba(11,107,58,0.05);
+    --shadow-md:  0 4px 12px rgba(11,107,58,0.10), 0 2px 4px rgba(11,107,58,0.06);
+    --shadow-lg:  0 10px 30px rgba(11,107,58,0.12), 0 4px 8px rgba(11,107,58,0.08);
 }
 
 /* ---------- Reset y base ---------- */
-*,
-*::before,
-*::after {
+*, *::before, *::after {
     box-sizing: border-box;
 }
+.hidden { display: none; }
 
 html {
     -webkit-text-size-adjust: 100%;
@@ -48,127 +36,151 @@ html {
     scroll-behavior: smooth;
 }
 
-/* ---------- Tipografía base con Inter ---------- */
 body {
     font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    font-size: 16px;
-    line-height: 1.5;
-    color: var(--coovilros-text);
-    background-color: var(--coovilros-bg);
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--jdr-text);
+    background-color: var(--jdr-bg);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* ---------- Scrollbar personalizado (suave, discreto) ---------- */
+/* ---------- Scrollbar ---------- */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
 }
-
 ::-webkit-scrollbar-track {
-    background: var(--coovilros-bg);
+    background: var(--jdr-bg);
 }
-
 ::-webkit-scrollbar-thumb {
-    background: var(--coovilros-primary);
+    background: var(--jdr-green);
     border-radius: 3px;
-    opacity: 0.5;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--coovilros-dark);
-    opacity: 0.8;
+    background: var(--jdr-green-dark);
 }
 
-/* ---------- Selección de texto ---------- */
+/* ---------- Selección ---------- */
 ::selection {
-    background: var(--coovilros-primary);
+    background: var(--jdr-green);
     color: #fff;
 }
 
-/* ---------- Focus visible accesible ---------- */
+/* ---------- Focus accesible ---------- */
 :focus-visible {
-    outline: 2px solid var(--coovilros-primary);
+    outline: 3px solid var(--jdr-green);
     outline-offset: 2px;
     border-radius: 4px;
 }
 
-/* ---------- Botones y enlaces de acción ---------- */
+/* ---------- Enlaces ---------- */
 a {
-    color: var(--coovilros-primary);
+    color: var(--jdr-green);
     text-decoration: none;
     transition: color 0.15s ease;
 }
-
 a:hover {
-    color: var(--coovilros-dark);
-}/* ---------- Mapa: contenedor y overlays ---------- */
-
-#map-container {
-    position: relative;
-    background: #1a1a1a; /* color de carga oscuro antes de satélite */
-    border-radius: var(--radius-2xl);
-    overflow: hidden;
+    color: var(--jdr-green-dark);
 }
 
-/* Estilo del InfoWindow de Google Maps */
-.gm-style-iw {
-    border-radius: var(--radius-xl) !important;
-    overflow: visible !important;
-}
-
-.gm-style-iw-c {
-    border-radius: var(--radius-xl) !important;
-    padding: 0 !important;
-    box-shadow: var(--shadow-md-custom) !important;
-    border: 1px solid rgba(11,107,58, 0.12) !important;
-    font-family: 'Inter', sans-serif !important;
-}
-
-.gm-style-iw-d {
-    overflow: auto !important;
-}
-
-/* Quitar el fondo negro del tooltip de Google Maps */
-.gm-style-iw-tc::after {
-    display: none !important;
-}
-
-.gm-style .gm-style-iw-tc {
-    background: white !important;
-    border-radius: 4px !important;
-}
-
-/* Marcador custom: animación al hacer hover */
-[aria-label] {
-    transition: transform 0.15s ease;
-}
-
-/* ---------- Input de búsqueda ---------- */
-#search-input::placeholder {
-    color: var(--coovilros-text-sec);
+/* ---------- Búsqueda ---------- */
+.search-input-field::placeholder {
+    color: var(--jdr-text-sec);
     font-weight: 400;
-    opacity: 0.85;
+    opacity: 0.75;
 }
 
-/* ---------- Tarjetas de resultados: micro-interacciones ---------- */
-#results-grid article {
-    will-change: transform;
+/* ---------- Tarjetas de resultados ---------- */
+.result-card {
+    background: var(--jdr-white);
+    border-radius: 1rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid rgba(11,107,58,0.08);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
                 box-shadow 0.2s ease,
                 border-color 0.2s ease;
+    will-change: transform;
 }
-
-#results-grid article:focus {
-    outline: 2px solid var(--coovilros-primary);
+.result-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(11,107,58,0.18);
+}
+.result-card:active {
+    transform: scale(0.99);
+}
+.result-card:focus {
+    outline: 3px solid var(--jdr-green);
     outline-offset: 2px;
 }
 
-/* ---------- Badge de distancia flotante ---------- */
+.result-card .card-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--jdr-green);
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+}
+
+.result-card .card-data {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.25rem 1rem;
+    font-size: 0.85rem;
+    color: var(--jdr-text);
+}
+
+.result-card .card-data .data-label {
+    font-weight: 700;
+    color: var(--jdr-text-sec);
+    min-width: 2.5rem;
+}
+
+.result-card .card-data .data-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+}
+
+/* ---------- Mapa ---------- */
+#map-container {
+    position: relative;
+    background: #1a1a1a;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+/* Google Maps InfoWindow */
+.gm-style-iw {
+    border-radius: 0.75rem;
+    overflow: visible;
+}
+.gm-style-iw-c {
+    border-radius: 0.75rem;
+    padding: 0;
+    box-shadow: var(--shadow-md);
+    border: 1px solid rgba(11,107,58, 0.12);
+    font-family: 'Inter', sans-serif;
+}
+.gm-style-iw-d {
+    overflow: auto;
+}
+.gm-style-iw-tc::after {
+    display: none;
+}
+.gm-style .gm-style-iw-tc {
+    background: white;
+    border-radius: 4px;
+}
+
+/* ---------- Badge de distancia ---------- */
 #distance-badge {
     transition: opacity 0.25s ease, transform 0.25s ease;
 }
-
 #distance-badge span {
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -190,63 +202,166 @@ a:hover {
     }
 }
 
-/* ---------- Animación sutil para botón de Google Maps ---------- */
-@keyframes pulse-once-gmaps {
-    0%   { box-shadow: 0 6px 20px rgba(0,168,89,0.35); }
-    50%  { box-shadow: 0 6px 28px rgba(0,168,89,0.55); }
-    100% { box-shadow: 0 6px 20px rgba(0,168,89,0.35); }
+/* ---------- Botón WhatsApp animación sutil ---------- */
+.whatsapp-btn {
+    animation: whatsapp-pulse 2.5s ease-in-out infinite;
+}
+@keyframes whatsapp-pulse {
+    0%, 100% { box-shadow: 0 4px 14px rgba(37,211,102,0.35); }
+    50%      { box-shadow: 0 4px 22px rgba(37,211,102,0.55); }
 }
 
-/* Aplicado cuando el botón se renderiza por primera vez en vista B */
-/*
-   Nota: el atributo class="animate-pulse-once" se maneja desde app.js
-   cuando se construye la URL dinámicamente; aquí solo definimos la clave.
-*/
-.animate-pulse-once {
-    animation: pulse-once-gmaps 1.4s ease-in-out 1;
-}
-
-/* ---------- Ajustes táctiles para dispositivos móviles ---------- */
+/* ---------- Ajustes móviles ---------- */
 @media (hover: none) and (pointer: coarse) {
-    #results-grid article:hover {
+    .result-card:hover {
         transform: none;
-        box-shadow: var(--shadow-sm-custom);
+        box-shadow: var(--shadow-sm);
     }
-
-    #results-grid article:active {
+    .result-card:active {
         transform: scale(0.98);
     }
 }
 
-/* ---------- Ajuste de espaciado vertical para caber en pantallas pequeñas ---------- */
 @media (max-width: 480px) {
+    body {
+        font-size: 16px;
+    }
     #app-root {
-        padding-top: 0.75rem;
+        padding-top: 0.5rem;
+    }
+    .result-card .card-data {
+        grid-template-columns: 1fr;
     }
 }
 
 /* ---------- Footer ---------- */
 footer a {
-    color: var(--coovilros-primary);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    text-decoration-thickness: 1px;
-    text-decoration-color: rgba(11,107,58,0.3);
-}
-
-footer a:hover {
-    color: var(--coovilros-dark);
-    text-decoration-color: var(--coovilros-primary);
+    transition: all 0.15s ease;
 }
 
 /* ---------- Accesibilidad: reduced-motion ---------- */
 @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
+    *, *::before, *::after {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+        transition-duration: 0.01ms;
+        scroll-behavior: auto;
     }
 }
+
+/* ---------- Referencia visual: Jardín del Rosario ---------- */
+:root { --jdr-green: #087a43; --jdr-green-dark: #056334; --jdr-bg: #fff; --jdr-text: #111; }
+body { background:#fff; color:#111; min-height:100vh; }
+#btn-back { display:inline-flex; align-items:center; gap:.3rem; border:0; background:transparent; color:#087a43; font-size:.78rem; font-weight:700; padding:.2rem 0; cursor:pointer; }
+#btn-back svg { width:20px; height:20px; max-width:20px; max-height:20px; }
+/* Iconografía propia: todos los SVG mantienen el tamaño visual de w-5 h-5.
+   Se excluye el contenido interno de Google Maps. */
+body > header svg,
+body > main svg:not(#map-container svg),
+body > footer svg,
+body svg.w-4.h-4,
+body svg.w-5.h-5,
+body svg.w-3\.5.h-3\.5 {
+    width:20px;
+    height:20px;
+    max-width:20px;
+    max-height:20px;
+    flex:0 0 20px;
+}
+.app-header { background:#f1f1f1; text-align:center; padding:1.35rem 1rem .7rem; border-bottom:1px solid #ddd; }
+.app-header .brand-lockup { display:inline-flex; align-items:center; justify-content:center; }
+.app-header h1 { display:none; }
+.app-header .brand-lockup + div p { display:block; margin:.5rem 0 .15rem; color:#111; font-size:1.2rem; font-weight:800; }
+.app-header .brand-lockup + div { display:block; }
+.app-header .gps-note p { color:#222; }
+.brand-logo { display:block; width:auto; height:58px; max-width:85%; object-fit:contain; }
+.brand-copy, .header-shell > div:first-child > div:last-child { display:none; }
+.page-subtitle { margin:.5rem 0 .15rem; font-size:1.2rem; font-weight:800; }
+.header-description { margin:0 auto .35rem; max-width:350px; font-size:.78rem; line-height:1.35; font-weight:700; }
+.gps-note { margin:.25rem 0 0; font-size:.73rem; color:#222; }
+.gps-icon { color:#05a64f; font-size:1rem; margin-right:.2rem; }
+.app-shell, #app-root { width:100%; max-width:390px; margin:0 auto; }
+.app-main { padding:0 1rem 9.25rem; }
+.search-section { padding-top:1rem; }
+.search-box { display:flex; align-items:stretch; border:1px solid #a9a9a9; border-radius:6px; overflow:hidden; background:#f8f8f8; }
+.search-input-field { min-width:0; flex:1; height:39px; padding:0 .8rem; border:0; background:#f0f0f0; font-size:.92rem; outline:0; }
+.relative { display:flex; align-items:stretch; border:1px solid #aaa; border-radius:6px; overflow:hidden; background:#f0f0f0; }
+#search-input { width:100%; }
+.search-input-field::placeholder { color:#c7cbd0; opacity:1; }
+.search-btn { width:39px; height:39px; border:0; background:#087a43; color:#fff; font-size:1rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.search-btn svg { width:21px; height:21px; max-width:21px; max-height:21px; }
+.results-count { margin:.55rem .1rem 1.2rem; text-align:right; font-size:.68rem; font-weight:600; }
+.results-count strong { font-weight:800; }
+.results-grid { display:grid; gap:.7rem; }
+.result-card { border:1px solid #222; border-radius:7px; padding:1rem 1.25rem; box-shadow:none; background:#fff; }
+.result-card .card-name { color:#111; font-size:.98rem; margin:0 0 .45rem; text-transform:uppercase; }
+.result-card .card-data { font-size:.76rem; grid-template-columns:1fr 1fr; gap:.2rem .8rem; }
+.results-count svg { display:none; }
+.result-card .card-data .data-label { color:#111; }
+.view-map { padding-top:.8rem; }
+.back-row { margin-bottom:.65rem; }
+.back-button { border:0; background:none; color:#087a43; font-weight:700; padding:.2rem 0; cursor:pointer; }
+.record-card { position:relative; border:1px solid #222; border-radius:7px; padding:.8rem 1rem; box-shadow:none; }
+#record-header { position:relative; border:1px solid #222; border-radius:7px; padding:.8rem 1rem; margin:0 0 .7rem; background:#fff; box-shadow:none; }
+.record-name { margin:0 0 .45rem; font-size:1rem; text-transform:uppercase; }
+#record-name { margin:0 0 .45rem; font-size:1rem; color:#111; text-transform:uppercase; }
+.record-data { display:grid; grid-template-columns:1fr 1fr; gap:.25rem .8rem; font-size:.76rem; }
+.record-data > div { display:flex; align-items:baseline; gap:.25rem; min-width:0; white-space:nowrap; }
+.record-data > div:nth-child(5) { grid-column:1 / -1; }
+.record-data b, .record-data .font-bold { flex:0 0 auto; color:#111; }
+.record-data b { margin-right:.25rem; }
+.record-map-mark { position:absolute; right:1.1rem; bottom:1rem; color:#00a94f; font-size:1.35rem; }
+.map-card { margin-top:.7rem; border:1px solid #222; border-radius:7px; overflow:hidden; background:#d2d3d4; }
+#map-container { height:215px; background:#d2d3d4; }
+.map-disclaimer { display:none; }
+.maps-button { display:none; }
+.distance-badge { position:absolute; z-index:2; }
+.gps-warning { padding:.4rem .6rem; background:#fff; font-size:.7rem; }
+.app-footer { position:fixed; z-index:50; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:390px; background:#f1f1f1; border-top:0; color:#111; text-align:center; padding:.55rem 1rem .75rem; }
+.footer-actions { display:flex; justify-content:center; align-items:center; gap:1.2rem; margin-bottom:.35rem; }
+.footer-action { padding:0; border:0; background:none; color:#009b4c; font-size:1.25rem; font-weight:400; }
+.footer-action span { display:none; }
+.copyright { margin:0; font-size:.63rem; font-weight:800; }
+.footer-logo { display:block; width:auto; height:42px; max-width:150px; margin:.65rem auto 0; }
+footer a:hover { color:#087a43; }
+@media (min-width:500px) { .app-header,.app-main,.app-footer { border-left:1px solid #aaa; border-right:1px solid #aaa; } }
+
+/* Compatibilidad con el markup existente */
+body > header { position:static; background:#f1f1f1; box-shadow:none; color:#111; text-align:center; padding:.85rem 1rem .55rem; }
+body > header > div { padding:0; }
+body > header > div > div:first-child { display:block; }
+body > header > div > div:first-child > a { display:block; }
+body > header img { height:58px; width:auto; max-width:85%; padding:0; border-radius:0; background:transparent; }
+body > header h1 { display:none; }
+body > header p { color:#111; }
+body > header > div > div:first-child p { margin:.45rem 0 .1rem; font-size:1.2rem; font-weight:800; }
+body > header > div > div:last-child { margin:.25rem 0 0; padding:0; background:transparent; display:block; }
+body > header > div > div:last-child svg { display:none; }
+body > header > div > div:last-child p { font-size:.72rem; margin:0; }
+body > header > div > div:last-child p::before { content:'●'; color:#00a94f; font-size:.85rem; margin-right:.25rem; }
+body > main#app-root { max-width:390px; padding:0 1rem 8rem; background:#fff; }
+body > main#app-root > section:first-child > div:first-child > label { display:none; }
+body > footer { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:390px; z-index:50; background:#f1f1f1; color:#111; border:0; padding:.55rem 1rem .75rem; text-align:center; }
+body > footer > div { padding:0; }
+body > footer > div > div:first-child { display:flex; justify-content:center; gap:1rem; margin:0 0 .25rem; }
+body > footer a { padding:.15rem .45rem; border:0; border-radius:0; background:transparent; color:#009b4c; box-shadow:none; font-size:1.2rem; }
+body > footer a svg { width:1.15rem; height:1.15rem; }
+body > footer a { font-size:0; }
+body > footer a svg { display:inline-block; }
+body > footer > div > div:last-child { border:0; padding:0; display:block; }
+body > footer > div > div:last-child span { display:block; color:#111; font-size:.63rem; font-weight:800; }
+body > footer img { height:42px; opacity:1; }
+
+/* Estructura semántica del documento */
+.header-shell { max-width:390px; margin:0 auto; padding:0; }
+.brand-row { display:flex; align-items:center; justify-content:center; }
+.brand-link { display:block; }
+.brand-copy { display:block; min-width:0; }
+.brand-copy h1 { display:none; }
+.brand-copy p { display:block; margin:.45rem 0 .1rem; color:#111; font-size:1.2rem; font-weight:800; }
+.gps-note { margin:.25rem 0 0; padding:0; background:transparent; }
+.gps-note p { margin:0; color:#222; font-size:.72rem; }
+.gps-note svg { display:none; }
+.search-label { display:none; }
+.search-section { margin:0; }
+.footer-actions { display:flex; }

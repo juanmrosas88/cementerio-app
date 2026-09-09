@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Coovilros - Ubicación de Parcelas | Cementerio Parque Memorial</title>
-    <meta name="description" content="Módulo de Geolocalización y Búsqueda de Parcelas - Cooperativa Villa del Rosario">
+    <title>Jardín del Rosario - Ubicación de Parcelas</title>
+    <meta name="description" content="Aplicación para ubicar Parcelas - Jardín del Rosario Cementerio Parque - Coovilros Ltda.">
     <meta name="theme-color" content="#0B6B3A">
 
     <script async defer
@@ -17,114 +17,56 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'coovilros-primary': '#0B6B3A',
-                        'coovilros-dark': '#005826',
-                        'coovilros-action': '#00A859',
-                        'coovilros-accent': '#4CAF50',
-                        'coovilros-icon-bg': '#E3F5E9',
-                        'coovilros-bg': '#F4F6F8',
-                        'coovilros-bg-alt': '#F8FAFC',
-                        'coovilros-text': '#222222',
-                        'coovilros-text-secondary': '#666666',
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
-                    },
-                    borderRadius: {
-                        '2xl': '1rem',
-                        '3xl': '1.5rem',
-                    },
-                },
-            },
-            plugins: [],
-        }
-    </script>
-
     <link rel="stylesheet" href="styles.css">
 </head>
 
-<body class="bg-coovilros-bg text-coovilros-text font-sans antialiased min-h-screen">
+<body class="app-body">
 
-
-    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-coovilros-primary/10 shadow-sm">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-            <a href="#" class="flex items-center gap-3 group" onclick="app.goHome(); return false;">
-                <div class="flex items-center gap-1.5">
-                    <svg class="w-8 h-8" viewBox="0 0 122.1 25.2" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path d="M114.3 8.3c0.5 0.5 1 1 1.4 1.2 0.5 0.3 0.9 0.4 1.4 0.4 0.4 0 0.8-.1 1.1-.3 0.3-.2 0.4-.5 0.4-.9 0-.4-.1-.7-.4-.9-.2-.2-.8-.4-1.6-.7-1.2-.3-2-.7-2.5-1.2-.5-.5-.7-1.2-.7-2.1 0-1.1.4-2.1 1.1-2.8.8-.7 1.7-1.1 2.9-1.1.7 0 1.3.1 1.9.3.6.2 1.1.4 1.7.8l-1 2.3c-.4-.3-.7-.5-1.1-.7-.4-.2-.8-.2-1.1-.2-.4 0-.7.1-.9.3-.2.2-.4.4-.4.7 0 .3.1.5.3.7.2.2.6.3 1.2.5l.1 0c1.3.4 2.2.7 2.6 1.2.3.3.5.6.6 1 .1.4.2.9.2 1.4 0 1.3-.4 2.3-1.2 3-.8.8-1.9 1.1-3.3 1.1-.8 0-1.6-.1-2.2-.4-.7-.3-1.3-.7-2-1.3L114.3 8.3z" fill="#232122"/>
-                        <path d="M106.4 9.7c.9 0 1.6-.3 2.2-1 .6-.7.9-1.5.9-2.5 0-1-.3-1.8-.9-2.5-.6-.7-1.3-1-2.2-1-.9 0-1.6.3-2.2 1-.6.7-.9 1.5-.9 2.5 0 1 .3 1.8.9 2.5C104.8 9.4 105.5 9.7 106.4 9.7L106.4 9.7zM112.8 6.2c0 .9-.2 1.6-.5 2.4-.3.7-.8 1.4-1.4 2-.6.6-1.3 1-2.1 1.3-.8.3-1.6.5-2.4.5-.8 0-1.7-.2-2.4-.5-.8-.3-1.5-.8-2-1.3-.6-.6-1.1-1.3-1.4-2-.3-.7-.5-1.5-.5-2.4 0-.8.2-1.6.5-2.4.3-.7.8-1.4 1.4-2 .6-.6 1.3-1 2-1.3.8-.3 1.6-.5 2.4-.5.8 0 1.6.2 2.4.5.8.3 1.5.8 2.1 1.3.6.6 1 1.2 1.4 2C112.6 4.6 112.8 5.4 112.8 6.2z" fill="#232122"/>
-                        <path d="M93.6 5.9h.6c.7 0 1.2-.1 1.5-.4.3-.2.5-.6.5-1.1 0-.6-.1-1-.4-1.3-.3-.3-.8-.4-1.5-.4h-.6V5.9L93.6 5.9zM90.6 12.1V.3h3.4c1.3 0 2.2.1 2.8.2.5.1 1 .3 1.3.6.4.3.8.7 1 1.2.2.5.3 1.1.3 1.7 0 .9-.2 1.7-.7 2.2-.4.6-1.1 1-2 1.1l3.2 4.8h-3.6l-2.7-4.6v4.6H90.6z" fill="#232122"/>
-                        <polygon points="82.3 12.1 82.3 0.3 85.5 0.3 85.5 9.3 89.5 9.3 89.5 12.1" fill="#232122"/>
-                        <rect x="77.8" y=".3" width="3.3" height="11.8" fill="#232122"/>
-                        <path d="M69.6 12.1l-5-11.8h3.4l2.4 6.6c0 .1.1.2.1.5.1.3.2.6.3 1.1.1-.4.2-.7.2-1 .1-.3.1-.5.2-.6l2.4-6.6H77l-5 11.8H69.6z" fill="#232122"/>
-
-                        <ellipse cx="13" cy="12.5" rx="12.1" ry="12.1" fill="#62BA46" transform="rotate(-20 13 12.5)"/>
-                        <path d="M13 0.4C6.3 0.4.9 5.8.9 12.5c0 4.3 2.3 8.1 5.7 10.3L8 20.5V16H2.8L11 3.2v12.5c0 0 5.5-8.7 5.9-9.3.4-.6 1.1-2.1 3.3-2.1 2 0 3 1.5 3 1.5C21 2.6 17.2 0.4 13 0.4z" fill="#006B33"/>
-                        <path d="M13 24.6c-4.2 0-8-2.2-10.1-5.5 0 0 1 1.5 3 1.5 2.1 0 3.1-1.7 3.1-1.7l1.5-2.4h5.2v5.3L13 24.6z" fill="#62BA46"/>
-
-                        <text x="38" y="19" font-family="Arial Black, sans-serif" font-size="11" font-weight="900" letter-spacing="0.5" fill="#006B33">COOVILROS</text>
-                        <text x="38" y="25" font-family="Arial, sans-serif" font-size="5.5" font-weight="600" letter-spacing="0.8" fill="#006B33" opacity="0.8">COOPERATIVA VILLA DEL ROSARIO</text>
-                    </svg>
-                    <span class="hidden sm:block">
-                        <span class="block text-[10px] uppercase tracking-[0.15em] text-[#006B33] font-semibold leading-tight">Cementerio Parque Memorial</span>
-                        <span class="block text-[#666666] text-[10px] font-medium leading-tight">Cooperativa Villa del Rosario</span>
-                    </span>
+    <!-- ==================== HEADER ==================== -->
+    <header class="app-header">
+        <div class="header-shell">
+            <!-- Logo + Título -->
+            <div class="brand-row">
+                <a href="#" onclick="app.goHome(); return false;" class="brand-link">
+                    <img src="content_app_buscar/logo_jdr.png"
+                         alt="Jardín del Rosario"
+                         class="brand-logo">
+                </a>
+                <div class="brand-copy">
+                    <h1>
+                        Jardín del Rosario - Cementerio Parque
+                    </h1>
+                    <p>
+                        Aplicación para ubicar Parcelas
+                    </p>
                 </div>
-            </a>
-
-            <div class="flex items-center gap-2">
-                <span class="hidden sm:inline-flex items-center gap-1.5 text-xs text-[#666666] bg-coovilros-icon-bg px-3 py-1.5 rounded-full">
-                    <svg class="w-3.5 h-3.5 text-coovilros-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    Scan QR en el predio
-                </span>
+            </div>
+            <!-- Nota GPS -->
+            <div class="gps-note">
+                <p>
+                    Para obtener la ruta guiada hasta la parcela, active la <strong>localización GPS</strong> en su dispositivo.
+                </p>
             </div>
         </div>
     </header>
 
-    <main id="app-root" class="max-w-5xl mx-auto px-4 sm:px-6 pb-8 pt-5">
+    <!-- ==================== MAIN ==================== -->
+    <main id="app-root" class="app-main">
 
+        <!-- ===== VISTA BÚSQUEDA ===== -->
         <section id="view-search" class="view">
 
-            <div class="mb-5">
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-coovilros-primary tracking-tight">
-                    Ubicación de Parcelas
-                </h1>
-                <p class="text-sm text-coovilros-text-secondary mt-1">
-                    Cementerio Parque Memorial · Villa del Rosario, Córdoba
-                </p>
-            </div>
-
-            <div class="bg-white rounded-2xl p-4 sm:p-5 mb-5 shadow-sm border border-coovilros-primary/8">
-                <div class="flex items-start gap-3">
-                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-coovilros-icon-bg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-coovilros-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <p class="text-sm text-coovilros-text-secondary leading-relaxed">
-                        Ingrese el nombre o apellido de su familiar para obtener la ubicación exacta y la ruta guiada dentro del predio.
-                    </p>
-                </div>
-            </div>
-
-            <div class="mb-6">
+            <!-- Barra de búsqueda -->
+            <div class="search-section">
+                <label for="search-input" class="search-label">
+                    Buscar fallecido/a
+                </label>
                 <div class="relative">
                     <input
                         type="search"
                         id="search-input"
-                        class="w-full h-12 sm:h-14 pl-4 pr-12 rounded-xl border-2 border-coovilros-primary/20 bg-white text-coovilros-text text-base font-medium
-                               placeholder:text-coovilros-text-secondary placeholder:font-normal
-                               focus:border-coovilros-primary focus:ring-2 focus:ring-coovilros-primary/10 focus:outline-none transition-all duration-200"
-                        placeholder="Ingrese Nombre o Apellido..."
+                        class="search-input-field"
+                        placeholder="Ingrese aquí Nombre o Apellido del fallecido"
                         autocomplete="off"
                         autocorrect="off"
                         autocapitalize="off"
@@ -133,46 +75,55 @@
                     <button
                         type="button"
                         id="search-btn"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-lg
-                               bg-coovilros-primary text-white hover:bg-coovilros-dark transition-colors duration-150"
+                        class="search-btn"
                         aria-label="Buscar"
                     >
-                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </button>
                 </div>
-                <div id="results-count" class="mt-2 text-xs text-coovilros-text-secondary font-medium hidden">
-                    <span id="results-count-value">0</span> resultados encontrados
+
+                <!-- Contador de registros -->
+                <div id="results-count" class="results-count hidden">
+                    <span>
+                        <svg class="w-4 h-4 text-jdr-yellow-mid" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                        Total de registros encontrados: <strong id="results-count-value">0</strong>
+                    </span>
                 </div>
             </div>
 
-            <div id="results-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Grilla de resultados -->
+            <div id="results-grid" class="results-grid">
             </div>
 
+            <!-- Estado vacío -->
             <div id="empty-state" class="hidden mt-6">
-                <div class="bg-white rounded-2xl p-8 shadow-sm border border-coovilros-primary/8 text-center">
-                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-coovilros-icon-bg flex items-center justify-center">
-                        <svg class="w-8 h-8 text-coovilros-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <div class="bg-white rounded-2xl p-8 shadow-sm border border-jdr-green/10 text-center">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-jdr-green-light flex items-center justify-center">
+                        <svg class="w-8 h-8 text-jdr-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-coovilros-primary mb-1">No se encontraron resultados</h3>
-                    <p class="text-sm text-coovilros-text-secondary">
+                    <h3 class="text-lg font-semibold text-jdr-green mb-1">No se encontraron resultados</h3>
+                    <p class="text-sm text-jdr-text-sec">
                         Intente con otro nombre o apellido.
                     </p>
                 </div>
             </div>
         </section>
 
+        <!-- ===== VISTA MAPA ===== -->
         <section id="view-map" class="view hidden">
 
-            <div class="flex items-center gap-3 mb-4">
+            <!-- Botón volver -->
+            <div class="back-row">
                 <button
                     type="button"
                     id="btn-back"
-                    class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-coovilros-primary text-white text-sm font-semibold
-                           hover:bg-coovilros-dark active:scale-[0.97] transition-all duration-150 flex-shrink-0"
+                    class="back-button"
                 >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
@@ -181,46 +132,38 @@
                 </button>
             </div>
 
-            <div id="record-header" class="bg-white rounded-2xl p-4 sm:p-5 mb-5 shadow-sm border border-coovilros-primary/8">
-                <div class="flex items-start gap-4">
-                    <div class="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-coovilros-icon-bg flex items-center justify-center">
-                        <svg class="w-6 h-6 sm:w-7 sm:h-7 text-coovilros-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                        </svg>
+            <!-- Ficha del fallecido -->
+            <div id="record-header" class="record-card">
+                <h2 id="record-name" class="record-name"></h2>
+                <div class="record-data">
+                    <div>
+                        <b>Nac.</b>
+                        <span id="record-birth-text"></span>
                     </div>
-                    <div class="min-w-0">
-                        <h2 id="record-name" class="text-xl sm:text-2xl font-bold text-coovilros-text truncate"></h2>
-                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-sm text-coovilros-text-secondary">
-                            <span id="record-birth" class="inline-flex items-center gap-1">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <span id="record-birth-text"></span>
-                            </span>
-                            <span>·</span>
-                            <span id="record-death" class="inline-flex items-center gap-1">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span id="record-death-text"></span>
-                            </span>
-                            <span>·</span>
-                            <span class="inline-flex items-center gap-1px">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                <span id="record-sector" class="font-medium text-coovilros-primary"></span>
-                            </span>
-                        </div>
+                    <div>
+                        <b>Def.</b>
+                        <span id="record-death-text"></span>
+                    </div>
+                    <div>
+                        <b>Sec.</b>
+                        <span id="record-sector"></span>
+                    </div>
+                    <div>
+                        <b>Lot.</b>
+                        <span id="record-lote"></span>
+                    </div>
+                    <div>
+                        <b>Par.</b>
+                        <span id="record-parcela"></span>
                     </div>
                 </div>
             </div>
 
-            <div class="relative mb-5 rounded-2xl overflow-hidden shadow-md border border-coovilros-primary/10 bg-white">
+            <!-- Contenedor del mapa -->
+            <div class="map-card">
                 <div id="distance-badge" class="absolute top-3 left-3 z-[1000] hidden">
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur shadow-lg border border-coovilros-primary/10
-                               text-xs font-bold text-coovilros-primary">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur shadow-lg border border-jdr-green/10
+                               text-xs font-bold text-jdr-green">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -228,94 +171,91 @@
                     </span>
                 </div>
 
-                <div id="map-container" class="w-full h-[420px] sm:h-[480px] lg:h-[540px]">
+                <div id="map-container">
                 </div>
 
                 <div id="gps-warning" class="absolute bottom-3 left-3 right-3 z-[1000] hidden">
-                    <div class="bg-white/90 backdrop-blur rounded-xl px-3 py-2 text-xs text-coovilros-text-secondary shadow border border-coovilros-bg-alt flex items-start gap-2">
+                    <div class="bg-white/90 backdrop-blur rounded-xl px-3 py-2 text-xs text-jdr-text-sec shadow border border-jdr-green-light flex items-start gap-2">
                         <svg class="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
                         </svg>
                         <span>
                             El GPS no está disponible. Para navegación precisa, use
-                            <a href="#" id="gps-warning-gmaps-link" target="_blank" class="text-coovilros-primary font-semibold underline hover:text-coovilros-dark">Google Maps</a>
+                            <a href="#" id="gps-warning-gmaps-link" target="_blank" class="text-jdr-green font-semibold underline hover:text-jdr-green-dark">Google Maps</a>
                             con las indicaciones para llegar a la parcela.
                         </span>
                     </div>
                 </div>
             </div>
 
-            <p class="text-xs text-coovilros-text-secondary text-center leading-relaxed -mt-2">
-                El GPS del dispositivo móvil puede presentar un margen de imprecisión de 3 a 5 metros.
-                Utilice el color del sector y la manzana como referencia final.
+            <p class="text-xs text-jdr-text-sec text-center leading-relaxed mb-4">
+                El GPS del dispositivo puede presentar un margen de imprecisión de 3 a 5 metros.
             </p>
 
-            <div class="mt-5">
+            <!-- Botón Google Maps -->
+            <div>
                 <a
                     id="btn-google-maps"
                     href="#"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="block w-full h-14 rounded-xl bg-coovilros-action text-white text-base sm:text-lg font-bold tracking-wide
-                           flex items-center justify-center gap-3 shadow-lg shadow-coovilros-action/25
-                           hover:brightness-110 active:scale-[0.98] transition-all duration-150 animate-pulse-once"
+                    class="block w-full h-14 rounded-xl bg-jdr-green text-white text-base sm:text-lg font-bold tracking-wide
+                           flex items-center justify-center gap-3 shadow-lg shadow-jdr-green/25
+                           hover:bg-jdr-green-dark active:scale-[0.98] transition-all duration-150"
                 >
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    Abrir Indicaciones para llegar en Google Maps
+                    Abrir en Google Maps
                 </a>
             </div>
         </section>
 
     </main>
 
-    <footer class="border-t border-coovilros-primary/8 bg-white/50 mt-8">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-coovilros-text-secondary">
-            <span>© 2025 Coovilros Ltda. — Cooperativa Villa del Rosario, Córdoba.</span>
-            <span class="flex items-center gap-1">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                Uso interno del predio
-            </span>
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="app-footer">
+        <div class="footer-shell">
+            <!-- Fila de acciones -->
+            <div class="footer-actions">
+                <!-- WhatsApp -->
+                <a href="https://wa.me/5493573446630?text=quiero%20informacion"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="footer-action whatsapp-btn"
+                   aria-label="Contactar por WhatsApp">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    </svg>
+                    Contacto
+                </a>
+
+                <!-- Mapa PDF -->
+                <a href="https://www.coovilros.com/descargas/mapajardindelrosario.pdf"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="footer-action map-pdf-btn"
+                   aria-label="Ver mapa del cementerio en PDF">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                    </svg>
+                    Mapa PDF
+                </a>
+            </div>
+
+            <!-- Copyright -->
+            <div class="footer-brand">
+                <span>©2026-Coovilros Ltda.</span>
+                <img src="content_app_buscar/logo_coovilros.png"
+                     alt="Coovilros - Cooperativa Villa del Rosario"
+                     class="footer-logo">
+            </div>
         </div>
     </footer>
 
     <script src="data.js"></script>
     <script src="app.js"></script>
-
-    <script>
-        window._domReady = false;
-        window._gmapsReady = false;
-
-        function tryInitApp() {
-            if (window._domReady && window._gmapsReady && !window._appInitialized) {
-                window._appInitialized = true;
-                console.log('[App] Iniciando — DOM + Google Maps listos');
-                app.initApp();
-            }
-        }
-
-        function initGoogleMap() {
-            window._gmapsReady = true;
-            tryInitApp();
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            window._domReady = true;
-            tryInitApp();
-        });
-
-        // Si Google Maps no carga en 8s, forzar init para que la búsqueda funcione
-        setTimeout(() => {
-            if (!window._gmapsReady) {
-                console.warn('[App] Google Maps no cargó. Iniciando sin mapa.');
-                window._gmapsReady = true;
-                tryInitApp();
-            }
-        }, 8000);
-    </script>
+    <script src="bootstrap.js"></script>
 </body>
 </html>
