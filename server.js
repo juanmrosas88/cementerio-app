@@ -18,6 +18,7 @@ const PORT = (process.env.PORT && process.env.PORT !== '0') ? parseInt(process.e
 
 let pool = null;
 let dbAvailable = false;
+let dbLastError = null;
 
 /**
  * Intenta conectar a PostgreSQL. Si falla, se usa datos mock.
@@ -54,8 +55,11 @@ async function initDatabase() {
         }
 
         dbAvailable = true;
+        dbLastError = null;
     } catch (err) {
+        dbLastError = err;
         console.error('⚠️  PostgreSQL no disponible, usando datos mock:', err.message);
+        console.error('Detalles del error DB:', err.stack);
         dbAvailable = false;
     }
 }
@@ -98,11 +102,12 @@ function buildParcelasQuery(searchTerm = null) {
     let query = `
         SELECT
             parcela          AS id,
-            extinto,
+            TRIM(extinto)    AS extinto,
             TO_CHAR(nacimiento, 'YYYY-MM-DD') AS nacimiento,
             TO_CHAR(defuncion,  'YYYY-MM-DD') AS defuncion,
-            sector,
             nivel,
+            lote,
+            numero_parcela,
             ST_Y(ST_Centroid(geom))  AS latitud,
             ST_X(ST_Centroid(geom))  AS longitud
         FROM servsoc.v_ocup_parcelas
@@ -139,16 +144,36 @@ app.get('/api/health', async (req, res) => {
                 timestamp: new Date().toISOString()
             });
         } catch (err) {
-            // Query falló — reportar DB como no disponible
+            dbLastError = err;
+            console.error('[API] Query de health PostgreSQL falló:', err.message);
+            console.error('Stack:', err.stack);
         }
+    } else {
+        console.log('[API] Health endpoint llamado pero DB no está disponible. Último error DB:', dbLastError ? dbLastError.message : 'Ninguno registrado');
     }
 
     res.json({
         status: 'ok',
-        source: 'mock',
+        source: 'mocke',
+        error_db: dbLastError ? dbLastError.message : null,
         total_registros: mockData ? mockData.parcelas.length : 0,
         timestamp: new Date().toISOString()
     });
+});
+
+/** GET /api/allcolumn — Trae 5 registros con todas sus columnas (para depuración) */
+app.get('/api/allcolumn', async (req, res) => {
+    if (dbAvailable) {
+        try {
+            const result = await pool.query('SELECT * FROM servsoc.v_ocup_parcelas LIMIT 5');
+            return res.json({ data: result.rows, source: 'postgresql' });
+        } catch (err) {
+            console.error('[API] Query de allcolumn falló:', err.message);
+            return res.status(500).json({ error: 'Error al consultar la base de datos', detalle: err.message });
+        }
+    }
+
+    res.status(500).json({ error: 'PostgreSQL no está disponible actualmente.' });
 });
 
 /** GET /api/parcelas?q=texto — Búsqueda de parcelas */
@@ -183,11 +208,12 @@ app.get('/api/parcelas/:id', async (req, res) => {
     if (dbAvailable) {
         try {
             const result = await pool.query(
-                `SELECT parcela AS id, extinto,
+                `SELECT parcela AS id, TRIM(extinto) AS extinto,
                         TO_CHAR(nacimiento, 'YYYY-MM-DD') AS nacimiento,
                         TO_CHAR(defuncion, 'YYYY-MM-DD') AS defuncion,
-                        sector,
                         nivel,
+                        lote,
+                        numero_parcela,
                         ST_Y(ST_Centroid(geom)) AS latitud,
                         ST_X(ST_Centroid(geom)) AS longitud
                  FROM servsoc.v_ocup_parcelas

@@ -98,6 +98,7 @@ const app = (() => {
 
     /** HTML del InfoWindow para un registro. */
     function buildInfoWindowHTML(record) {
+        const sectorOrNivel = record.sector || record.nivel || '';
         return `
             <div style="font-family: Inter, sans-serif; min-width: 170px; padding: 4px 0;">
                 <p style="font-weight:700; color:#0B6B3A; margin:0 0 4px; font-size:14px;">
@@ -107,7 +108,7 @@ const app = (() => {
                     ${record.nacimiento ? formatDate(record.nacimiento) : ''}${record.defuncion ? ' — ' + formatDate(record.defuncion) : ''}
                 </p>
                 <p style="margin:2px 0; color:#0B6B3A; font-size:12px; font-weight:600;">
-                    ${record.sector}
+                    ${sectorOrNivel}
                 </p>
             </div>
         `;
@@ -160,7 +161,7 @@ const app = (() => {
         dom.emptyState.classList.add("hidden");
 
         const html = records.map((r) => {
-            const sectorColor = r.color_sector || getSectorColor(r.sector);
+            const sectorColor = r.color_sector || getSectorColor(r.sector || r.nivel);
             const sectorName = r.sector || '';
             return `
                 <article class="group bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-coovilros-primary/8
@@ -184,13 +185,21 @@ const app = (() => {
                                 ${r.extinto}
                             </h3>
                             <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-sm text-coovilros-text-secondary">
-                                ${r.nacimiento ? '<span>' + formatDate(r.nacimiento) + '</span><span class="text-coovilros-text-secondary/40">·</span>' : ''}
-                                ${r.defuncion ? '<span>' + formatDate(r.defuncion) + '</span>' : ''}
+                                ${r.nacimiento ? '<span>Nac: ' + formatDate(r.nacimiento) + '</span><span class="text-coovilros-text-secondary/40">·</span>' : ''}
+                                ${r.defuncion ? '<span>Def: ' + formatDate(r.defuncion) + '</span>' : ''}
                             </div>
-                            <div class="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
-                                 style="background: ${sectorColor}18; color: ${sectorColor}; border: 1px solid ${sectorColor}40;">
-                                <span class="w-1.5 h-1.5 rounded-full" style="background: ${sectorColor}"></span>
-                                ${sectorName}
+                            <div class="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
+                                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold"
+                                     style="background: ${sectorColor}18; color: ${sectorColor}; border: 1px solid ${sectorColor}40;">
+                                    <span class="w-1.5 h-1.5 rounded-full" style="background: ${sectorColor}"></span>
+                                    Sec: ${sectorName}
+                                </div>
+                                <div class="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-gray-700 border border-gray-200">
+                                    Lot: ${r.lote || '-'}
+                                </div>
+                                <div class="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-gray-700 border border-gray-200">
+                                    Par: ${r.numero_parcela || r.id || '-'}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -222,7 +231,7 @@ const app = (() => {
         dom.recordName.textContent     = record.extinto;
         dom.recordBirthTxt.textContent = formatDate(record.nacimiento);
         dom.recordDeathTxt.textContent = formatDate(record.defuncion);
-        dom.recordSector.textContent   = record.sector;
+        dom.recordSector.textContent   = record.sector || record.nivel || '';
 
         dom.viewSearch.classList.add("hidden");
         dom.viewMap.classList.remove("hidden");
@@ -291,7 +300,7 @@ const app = (() => {
         if (targetInfoWindow) targetInfoWindow.close();
 
         const position = { lat: record.latitud, lng: record.longitud };
-        const color = record.color_sector || getSectorColor(record.sector);
+        const color = record.color_sector || getSectorColor(record.sector || record.nivel);
 
         targetMarker = new google.maps.Marker({
             position,

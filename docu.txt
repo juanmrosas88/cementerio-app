@@ -1,0 +1,36 @@
+GET  http://localhost:3000/api/health
+     → Retorna: { status, database, total_registros, timestamp }
+     → Ejemplo: http://localhost:3000/api/health
+
+GET  http://localhost:3000/api/parcelas
+     → Retorna todas las parcelas (2544 registros)
+     → Ejemplo: http://localhost:3000/api/parcelas
+
+GET  http://localhost:3000/api/parcelas?q=CARMEN
+     → Búsqueda por nombre (case-insensitive)
+     → Ejemplo: http://localhost:3000/api/parcelas?q=TERRENO
+
+GET  http://localhost:3000/api/parcelas/42
+     → Parcela específica por ID
+     → Ejemplo: http://localhost:3000/api/parcelas/1
+
+GET  http://localhost:3000/api/stats
+     → Estadísticas por sector
+     → Ejemplo: http://localhost:3000/api/stats
+
+GET  http://localhost:3000/
+     → Frontend (SPA completa)
+
+# desde la carpeta del proyecto:
+cd "C:\Users\juanm\OneDrive\Documentos\Proyectos web\cementerio-app"
+
+# Modo producción:
+node server.js
+
+# Modo desarrollo (con auto-reload si cambiás algo):
+npx nodemon server.js
+
+# Instalar dependencias (si es necesario):
+npm install
+
+
