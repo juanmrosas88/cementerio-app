@@ -1,239 +1,274 @@
-<div align="center">
+# Cementerio App · Ubicación de Parcelas
 
-<img src="logoheader.svg" alt="Coovilros — Cooperativa Villa del Rosario" width="420" />
+Aplicación web móvil para localizar parcelas del Cementerio Parque Jardín del Rosario, de Coovilros Ltda.
 
-# Ubicación de Parcelas · Cementerio Parque Memorial
+La persona usuaria puede buscar un fallecido por nombre o apellido, seleccionar el registro exacto y visualizar su parcela sobre Google Maps junto con los datos de ubicación.
 
-**Módulo de Geolocalización y Búsqueda de Parcelas** — Cooperativa Villa del Rosario, Córdoba, Argentina.
+## Funcionalidades
 
-Buscá el nombre de un familiar y obtené la ubicación exacta de su parcela en el predio, con ruta guiada por GPS y navegación directa a Google Maps.
+- Búsqueda parcial por nombre, apellido, sector, lote, parcela o identificador.
+- Contador del total de registros disponibles en la base de datos.
+- Tarjetas de resultados con nacimiento, defunción, sector, lote y parcela.
+- Vista de detalle separada para el registro seleccionado.
+- Mapa Google Maps con vista satelital y marcador de la parcela.
+- Geolocalización del dispositivo mediante `getCurrentPosition` y `watchPosition`.
+- Cálculo de distancia aproximada entre la persona usuaria y la parcela.
+- Enlace para abrir indicaciones a pie en Google Maps.
+- Acceso directo a WhatsApp con el mensaje `quiero informacion`.
+- Enlace al mapa institucional en PDF.
+- Fallback local con los registros incluidos en `data.js` cuando la API no está disponible.
+- Interfaz responsive orientada principalmente a dispositivos móviles.
 
-</div>
+## Arquitectura
 
----
+La aplicación no utiliza un bundler ni un framework frontend. Está compuesta por una SPA de JavaScript vanilla y un servidor Express que sirve los archivos y expone la API de parcelas.
 
-## 📖 Descripción
+### Flujo de arranque
 
-Aplicación web (SPA) estática que permite a los visitantes del **Cementerio Parque Memorial** de Coovilros ubicar la parcela de un fallecido ingresando su nombre o apellido.
+1. `data.js` define los datos de fallback y las funciones de consulta.
+2. `app.js` define la lógica de búsqueda, tarjetas, detalle, mapa y GPS.
+3. `bootstrap.js` espera a que estén listos el DOM y Google Maps.
+4. Cuando ambas dependencias están listas, `bootstrap.js` ejecuta `window.app.initApp()`.
+5. Si Google Maps no carga en ocho segundos, la búsqueda se inicializa igualmente y el mapa queda no disponible hasta que pueda cargarse.
 
-Al seleccionar un resultado, la aplicación:
+## Estructura del proyecto
 
-- Muestra la **ficha** del fallecido (nacimiento, defunción y sector).
-- Centra un **mapa satelital** en la parcela exacta, con un marcador con el color del sector.
-- Si el dispositivo lo permite, activa el **GPS en tiempo real** y dibuja la posición del visitante, un círculo de precisión y una **línea punteada** hacia la parcela, con un badge de **distancia dinámica**.
-- Ofrece un botón para abrir **indicaciones de llegada a pie en Google Maps**.
-
-Pensada para uso en **dispositivos móviles dentro del predio** (se accede escaneando un código QR), con soporte completo para escritorio.
-
----
-
-## ✨ Características
-
-- 🔍 **Búsqueda en tiempo real** por nombre o apellido (coincidencia parcial, insensible a mayúsculas/minúsculas).
-- 🗂️ **2.513 registros** reales exportados de la base de producción (vista PostGIS).
-- 🗺️ **Mapa satelital** Leaflet con tiles de Esri *World Imagery* (zoom real hasta nivel 18).
-- 📍 **GPS en tiempo real** con `watchPosition`: marcador azul animado, círculo de precisión y badge de distancia.
-- 🧭 **Línea de ruta** punteada entre el visitante y la parcela, con auto-zoom para que quepan ambos puntos.
-- 🎨 **Código de colores por sector** (Verde, Azul, Amarillo, Rojo, Rosa, Naranja) en tarjetas, marcador del mapa y popup.
-- 📱 **Diseño responsive** y optimizado para táctil (Tailwind CSS + estilos propios).
-- ♿ **Accesible**: navegación por teclado, `aria-label`, foco visible y soporte `prefers-reduced-motion`.
-- ⚠️ **Fallback de GPS**: si no hay permiso de ubicación, se muestra una advertencia con enlace directo a Google Maps.
-
----
-
-## 🧱 Stack tecnológico
-
-| Tecnología | Uso |
-|---|---|
-| **HTML5 + CSS3** | Estructura y estilos (semántico, sin frameworks de UI) |
-| **JavaScript (ES6+, Vanilla)** | Lógica de la SPA, sin dependencias de build |
-| **Leaflet 1.9.4** | Mapas interactivos (CDN, con integridad SRI) |
-| **Esri World Imagery** | Capa base satelital |
-| **Tailwind CSS v3** | Utilidades de diseño (CDN) |
-| **Google Fonts — Inter** | Tipografía institucional |
-| **PostgreSQL / PostGIS** | Origen de los datos en producción (vista `v_cp_extintos_parque`) |
-
-Sin paso de compilación: la app corre tal cual en cualquier servidor estático.
-
----
-
-## 📁 Estructura del proyecto
-
-```
+```text
 .
-├── index.html        # Página única (vistas: búsqueda y ficha + mapa)
-├── app.js            # Lógica de la SPA: búsqueda, mapa Leaflet y GPS
-├── data.js           # Base de datos simulada (2.513 registros) + helpers de consulta
-├── styles.css        # Estilos personalizados y variables de diseño Coovilros
-├── logoheader.svg    # Logo institucional (favicon y encabezado)
-└── v_cp_extintos_parque_puntos.geojson   # GeoData de origen (puntos WGS84)
+├── index.html                         # Documento principal y estructura de vistas
+├── styles.css                         # Diseño responsive e identidad visual
+├── app.js                             # Lógica de búsqueda, detalle, mapa y GPS
+├── bootstrap.js                       # Inicialización coordinada de la aplicación
+├── data.js                             # Fallback local y funciones de acceso a datos
+├── server.js                           # Servidor Express y API REST
+├── package.json                        # Scripts y dependencias del backend
+├── logoheader.svg                      # Favicon institucional
+├── v_cp_extintos_parque_puntos.geojson # Geodatos auxiliares
+└── content_app_buscar/
+    ├── logo_jdr.png                    # Logo del header
+    ├── logo_coovilros.png              # Logo del footer
+    ├── cp_parcelas.csv                 # Fuente de datos de fallback
+    └── Cementerio_app_ubica_parcela.pdf
 ```
 
-### Orden de carga
+## Requisitos
 
-Los scripts se cargan de forma secuencial y dependiente:
+- Node.js 18 o superior recomendado.
+- npm.
+- Navegador moderno con soporte para geolocalización.
+- Clave válida de Google Maps JavaScript API configurada en `index.html`.
+- PostgreSQL/PostGIS sólo si se desea utilizar la base de datos remota.
 
-1. **Leaflet** (CDN) — expone el objeto global `L`.
-2. **`data.js`** — define `filterRecords()` y `getRecordById()`.
-3. **`app.js`** — expone el objeto global `app` (`initApp`, `showMapView`, etc.).
+## Instalación y ejecución
 
-`app.js` consume los helpers de `data.js` a través de `window` (`window.filterRecords`, `window.getRecordById`).
-
----
-
-## 🚀 Puesta en marcha
-
-### Requisitos
-
-- Un navegador moderno (Chrome, Edge, Firefox o Safari, recientes).
-- **No requiere** instalar dependencias ni compilar.
-
-### Opción A — Directo desde el archivo
-
-Abrí `index.html` con doble clic. Funciona, aunque por razones de seguridad algunos navegadores restringen el GPS con `file://`.
-
-### Opción B — Servidor local (recomendado)
-
-Con **Python**:
+Instalar dependencias:
 
 ```bash
-# desde la raíz del proyecto
-python -m http.server 8080
+npm install
 ```
 
-Con **Node.js** (`npx`):
+Iniciar el servidor:
 
 ```bash
-npx serve .
+npm start
 ```
 
-Luego abrí <http://localhost:8080>.
+La aplicación queda disponible en:
 
-> 💡 **GPS**: para probar la geolocalización en el predio se requiere conexión HTTPS (o `localhost`). En la web pública se accede escaneando el **código QR** dispuesto en el predio.
+```text
+http://localhost:3000
+```
 
----
-
-## 🌐 Publicación de prueba (GitHub Pages)
-
-El repositorio está configurado para publicar la app en **GitHub Pages** mediante **GitHub Actions** (workflow en `.github/workflows/deploy.yml`). El sitio queda disponible en:
-
-> **https://juanmrosas88.github.io/cementerio-app/**
-
-Es un sitio de **testing** con HTTPS (el GPS funciona) y actualización automática: **cada `git push` a `main` redeplea solo**. Tarda aproximadamente 1 minuto.
-
-### Configuración única (una sola vez)
-
-1. En GitHub: **Settings → Pages → Source → GitHub Actions**.
-2. El primer deploy se dispara con el primer push a `main` (o con el botón **Run workflow** en la pestaña **Actions**).
-
-### Redeplegar cambios
+Durante el desarrollo puede utilizarse:
 
 ```bash
-git add .
-git commit -m "tus cambios"
-git push
+npm run dev
 ```
 
-### Qué publica el workflow
+El script `dev` utiliza `nodemon` para reiniciar el servidor cuando cambian los archivos.
 
-Solo los archivos de la app (`index.html`, `app.js`, `data.js`, `styles.css`, `logoheader.svg`) en un directorio limpio. Quedan **excluidos** del sitio los archivos internos (`.freebuff/`, `NUL`, `.git/`, etc.).
+## Configuración de base de datos
 
-> 💡 ¿Preferís no usar git? Alternativa igual de simple: **Netlify CLI** (`npm i -g netlify-cli`, `netlify login`, `netlify deploy --prod --dir=.`).
+Crear un archivo `.env` a partir de `.env.example`:
 
----
+```env
+PORT=3000
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=usuario
+DB_PASSWORD=contraseña
+DB_NAME=base_de_datos
+```
 
-## 🗄️ Modelo de datos
+`server.js` intenta conectarse a PostgreSQL al iniciar. Si la conexión falla, carga automáticamente los registros de `data.js` como fallback.
 
-Cada registro tiene la siguiente forma:
+La consulta de producción utiliza la vista:
 
-```js
+```text
+servsoc.v_ocup_parcelas
+```
+
+Los campos esperados incluyen:
+
+- `parcela`
+- `extinto`
+- `nacimiento`
+- `defuncion`
+- `nivel`
+- `lote`
+- `numero_parcela`
+- `geom` como geometría PostGIS
+
+Las coordenadas se obtienen calculando el centroide de `geom` con SRID 4326.
+
+## API
+
+### Estado de conexión
+
+```http
+GET /api/health
+```
+
+Devuelve el estado de la API, el origen de los datos y el total de registros.
+
+### Buscar parcelas
+
+```http
+GET /api/parcelas?q=texto
+```
+
+Sin `q`, devuelve todos los registros disponibles. Con `q`, filtra por el nombre del fallecido en PostgreSQL o utiliza el buscador local del fallback.
+
+Respuesta esperada:
+
+```json
 {
-  id: 2513,                 // Identificador único
-  extinto: "MARIA ANA CEAGLIO",
-  nacimiento: "1938-10-30", // ISO YYYY-MM-DD
-  defuncion: "2026-07-21",
-  sector: "Sector Amarillo",
-  latitud: -31.5676348,     // WGS84 (EPSG:4326)
-  longitud: -63.5161636
+  "data": [
+    {
+      "id": 1369,
+      "extinto": "CORIA HORACIO",
+      "nacimiento": "1946-10-30",
+      "defuncion": "2013-06-14",
+      "nivel": "2",
+      "lote": "24",
+      "numero_parcela": "7",
+      "latitud": -31.5667155,
+      "longitud": -63.5155777
+    }
+  ],
+  "count": 1,
+  "source": "postgresql"
 }
 ```
 
-### Consulta SQL de producción
+### Obtener una parcela por identificador
 
-Los datos se exportan de una **vista PostgreSQL/PostGIS** que une la tabla de parcelas con la de extractos, proyectando el **centroide de la geometría** (parcela poligonal) a latitud/longitud:
-
-```sql
-SELECT
-    id,
-    extinto,
-    TO_CHAR(nacimiento, 'YYYY-MM-DD') AS nacimiento,
-    TO_CHAR(defuncion,  'YYYY-MM-DD') AS defuncion,
-    sector,
-    ST_Y(ST_Centroid(geom)) AS latitud,
-    ST_X(ST_Centroid(geom)) AS longitud
-FROM v_cp_extintos_parque
-ORDER BY extinto;
+```http
+GET /api/parcelas/:id
 ```
 
-> Para producción se recomienda reemplazar `MOCK_DATABASE` en `data.js` por una consulta real (por ejemplo, una API que devuelva este mismo JSON).
+Devuelve el detalle de una parcela. En la interfaz, los resultados seleccionados se conservan directamente desde la búsqueda para evitar confundir registros cuando varias personas comparten una misma ubicación física.
 
----
+### Estadísticas
 
-## ⚙️ Detalles técnicos
+```http
+GET /api/stats
+```
 
-### Mapa y tiles satelitales
+Devuelve el total de parcelas y el desglose por nivel.
 
-- Los tiles de **Esri World Imagery** en la zona del cementerio tienen datos reales hasta **zoom 18**; desde zoom 19 devuelven mosaico gris. Por eso `ZOOM_CEMETERY` y `ZOOM_TARGET` están fijados en **18**.
-- El control de zoom se ubica en la **esquina inferior derecha** (más alcanzable en móvil).
-- El mapa recalcula su tamaño (`invalidateSize`) al cambiar de vista y ante rotación/redimensión.
+### Sectores
 
-### Colores por sector
+```http
+GET /api/sectores
+```
 
-| Sector | Color |
-|---|---|
-| Sector Verde | `#0B6B3A` |
-| Sector Azul | `#1565C0` |
-| Sector Amarillo | `#F9A825` |
-| Sector Rojo | `#C62828` |
-| Sector Rosa | `#AD1457` |
-| Sector Naranja | `#EF6C00` |
+Devuelve los colores configurados para los sectores.
 
-### GPS
+## Uso de la interfaz
 
-- Se usa `getCurrentPosition` para una fijación rápida y `watchPosition` para seguimiento continuo, ambos con `enableHighAccuracy: true`.
-- La distancia se calcula con `map.distance()` (fórmula de haversine de Leaflet) y se muestra en metros con formato `es-AR`.
-- Si el GPS no está disponible o el usuario deniega el permiso, se oculta la ruta y se muestra un aviso con enlace a Google Maps.
+1. Ingresar el nombre o apellido en el buscador.
+2. Presionar el botón de lupa o la tecla Enter.
+3. Seleccionar la tarjeta del registro deseado.
+4. Revisar los datos de la persona y la parcela.
+5. Consultar el marcador en Google Maps.
+6. Activar la ubicación del dispositivo para obtener distancia y orientación.
+7. Abrir Google Maps para iniciar la navegación si es necesario.
 
----
+La precisión del GPS puede variar. La aplicación informa un margen estimado de entre 3 y 5 metros.
 
-## 📱 Cómo se usa
+## Integraciones externas
 
-1. **Buscar**: ingresá nombre o apellido en el campo de búsqueda (filtra mientras escribís).
-2. **Elegir**: tocá la tarjeta del familiar (muestra fechas y sector).
-3. **Ubicar**: el mapa satelital se centra en la parcela; si hay GPS, verás tu posición, la distancia y la línea punteada.
-4. **Navegar**: tocá *"Abrir Indicaciones para llegar en Google Maps"* para recibir la ruta a pie.
+### Google Maps
 
-> ⚠️ El GPS del dispositivo móvil puede presentar un margen de imprecisión de 3 a 5 metros. Utilizá el color del sector y la manzana como referencia final.
+El mapa se carga desde Google Maps JavaScript API. La clave se referencia desde `index.html` mediante el callback global `initGoogleMap`.
 
----
+La aplicación utiliza:
 
-## 🔮 Roadmap sugerido
+- `google.maps.Map`
+- `google.maps.Marker`
+- `google.maps.InfoWindow`
+- `google.maps.Polyline`
+- `google.maps.LatLngBounds`
 
-- [ ] Reemplazar `MOCK_DATABASE` por una API conectada a PostgreSQL/PostGIS.
-- [ ] Dibujar las **parcelas poligonales** (no solo el punto) a partir del GeoJSON.
-- [ ] Soporte para búsqueda por **nicho / manzana / número de parcela**.
-- [ ] **Navegación paso a paso** dentro del predio (rutas peatonales).
-- [ ] Soporte offline con service workers y tiles empaquetados.
-- [ ] Panel administrativo para actualizar datos sin recompilar.
+### WhatsApp
 
----
+El footer abre el siguiente contacto:
 
-## 📄 Licencia
+```text
++54 9 3573 44-6630
+```
 
-© 2025 **Coovilros Ltda.** — Cooperativa Villa del Rosario, Córdoba. Uso interno del predio.
+con el mensaje predefinido:
 
----
+```text
+quiero informacion
+```
 
-<div align="center">
-  <sub>Hecho con ❤️ para las familias de Villa del Rosario.</sub>
-</div>
+### Mapa institucional
+
+```text
+https://www.coovilros.com/descargas/mapajardindelrosario.pdf
+```
+
+## Datos locales
+
+`data.js` contiene el fallback de registros y las funciones:
+
+- `buscarParcelas(texto)`
+- `fetchParcelas(query)`
+- `fetchParcelaById(id)`
+
+Los datos de fallback deben mantenerse en UTF-8 para conservar correctamente caracteres como `Ñ`, `Á`, `É`, `Ü` y otros nombres propios.
+
+## Consideraciones de seguridad y despliegue
+
+- No exponer credenciales PostgreSQL en el repositorio.
+- Mantener `.env` fuera del control de versiones.
+- Servir la aplicación mediante HTTPS en producción para permitir geolocalización.
+- Restringir la clave de Google Maps por dominio y APIs habilitadas.
+- Verificar que el endpoint `/api/parcelas` no exponga columnas innecesarias.
+- Probar el flujo en dispositivos móviles reales antes de publicar.
+
+## Diagnóstico rápido
+
+Comprobar el backend:
+
+```bash
+curl http://localhost:3000/api/health
+```
+
+Si la respuesta indica `source: "mock"`, la aplicación está funcionando con `data.js` porque PostgreSQL no está disponible o falló la conexión.
+
+Si la búsqueda no responde:
+
+1. Revisar la consola del navegador.
+2. Confirmar que `app.js`, `data.js` y `bootstrap.js` carguen sin errores.
+3. Verificar que aparezca el mensaje `[App] Iniciando — DOM + Google Maps listos`.
+4. Comprobar que `/api/parcelas?q=...` devuelva JSON válido.
+
+## Licencia
+
+©2026-Coovilros Ltda. — Cooperativa Villa del Rosario, Córdoba, Argentina.
+
+Uso institucional del Cementerio Parque Jardín del Rosario.
