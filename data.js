@@ -25411,10 +25411,26 @@ function buscarParcelas(texto) {
     );
 }
 
+// La API solo está disponible cuando la app se sirve desde un backend HTTP.
+// En file:// y GitHub Pages se usa directamente el fallback local para evitar
+// errores CORS y solicitudes 404 innecesarias en la consola.
+function puedeUsarApi() {
+    if (typeof window === 'undefined' || !window.location) return false;
+    const { protocol, hostname } = window.location;
+    return (protocol === 'http:' || protocol === 'https:') && !hostname.endsWith('github.io');
+}
+
 // Fetch parcelas from API, fallback a mock
 async function fetchParcelas(query) {
     console.log('[Fetch] ===== fetchParcelas INICIADO =====');
     console.log('[Fetch] query:', JSON.stringify(query));
+
+    if (!puedeUsarApi()) {
+        const results = buscarParcelas(query || '');
+        console.log('[Mock] Entorno estático detectado; usando datos locales:', results.length, 'registros');
+        return results;
+    }
+
     try {
         const url = query
             ? '/api/parcelas?q=' + encodeURIComponent(query)
@@ -25452,6 +25468,11 @@ async function fetchParcelas(query) {
 // Fetch parcela by ID from API, fallback a mock
 async function fetchParcelaById(id) {
     console.log('[Fetch] fetchParcelaById id:', id);
+
+    if (!puedeUsarApi()) {
+        return parcelas.find(p => String(p.id) === String(id)) || null;
+    }
+
     try {
         const res = await fetch('/api/parcelas/' + id);
         console.log('[Fetch] Parcela by ID HTTP status:', res.status);

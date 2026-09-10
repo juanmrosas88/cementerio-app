@@ -49,12 +49,13 @@ const app = (() => {
         recordSector:   $("#record-sector"),
         recordLote:     $("#record-lote"),
         recordParcela:  $("#record-parcela"),
+        mapCard:         $("#map-card"),
         mapContainer:   $("#map-container"),
         distanceBadge:  $("#distance-badge"),
         distanceValue:  $("#distance-value"),
         gpsWarning:     $("#gps-warning"),
         gpsWarningLink: $("#gps-warning-gmaps-link"),
-        btnGoogleMaps:  $("#btn-google-maps"),
+        recordGoogleMaps: $("#record-google-maps"),
     };
 
     /** Formatea fecha ISO "YYYY-MM-DD" → "DD/MM/YYYY". */
@@ -117,6 +118,15 @@ const app = (() => {
         dom.viewSearch.classList.remove("hidden");
         dom.viewMap.classList.add("hidden");
         dom.searchInput.value = "";
+        dom.resultsGrid.innerHTML = "";
+        dom.emptyState.classList.add("hidden");
+        dom.resultsCount.classList.remove("hidden");
+        const countValue = document.getElementById("results-count-value");
+        if (countValue) {
+            countValue.textContent = totalRecords !== null
+                ? totalRecords.toLocaleString("es-AR")
+                : "0";
+        }
         dom.searchInput.focus();
         hideDistanceBadge();
         hideGpsWarning();
@@ -128,7 +138,9 @@ const app = (() => {
         const trimmed = (query || '').trim();
         if (!trimmed) {
             dom.resultsGrid.innerHTML = "";
-            dom.resultsCount.classList.add("hidden");
+            dom.resultsCount.classList.remove("hidden");
+            document.getElementById("results-count-value").textContent =
+                totalRecords !== null ? totalRecords.toLocaleString('es-AR') : "0";
             dom.emptyState.classList.add("hidden");
             return;
         }
@@ -147,7 +159,7 @@ const app = (() => {
             const countEl = document.getElementById("results-count");
             const countVal = document.getElementById("results-count-value");
             countEl.classList.remove("hidden");
-            countVal.textContent = totalRecords !== null ? totalRecords.toLocaleString('es-AR') : count;
+            countVal.textContent = count.toLocaleString('es-AR');
         } catch (err) {
             console.error('[App] Error en filterRecords:', err);
         }
@@ -233,7 +245,7 @@ const app = (() => {
         dom.viewSearch.classList.add("hidden");
         dom.viewMap.classList.remove("hidden");
 
-        dom.btnGoogleMaps.href =
+        dom.recordGoogleMaps.href =
             `https://www.google.com/maps/dir/?api=1&destination=${record.latitud},${record.longitud}&travelmode=walking`;
 
         if (!map) {
@@ -279,6 +291,13 @@ const app = (() => {
                 { featureType: "poi",     stylers: [{ visibility: "off" }] },
                 { featureType: "transit", stylers: [{ visibility: "off" }] }
             ]
+        });
+
+        // El borde negro queda como fallback visual si el mapa no llega a cargar.
+        // Cuando Google Maps termina de dibujar, se elimina para dejar visible
+        // únicamente el radio suave del mapa.
+        google.maps.event.addListenerOnce(map, "idle", () => {
+            dom.mapCard.classList.add("map-loaded");
         });
 
         placeTargetMarker(record);
@@ -509,7 +528,7 @@ const app = (() => {
 
     function showGpsWarning(record) {
         dom.gpsWarning.classList.remove("hidden");
-        dom.gpsWarningLink.href = dom.btnGoogleMaps.href;
+        dom.gpsWarningLink.href = dom.recordGoogleMaps.href;
     }
 
     function hideGpsWarning() {
@@ -528,7 +547,10 @@ const app = (() => {
         window.fetchParcelas('').then((records) => {
             totalRecords = Array.isArray(records) ? records.length : null;
             const countVal = document.getElementById('results-count-value');
-            if (countVal && totalRecords !== null) countVal.textContent = totalRecords.toLocaleString('es-AR');
+            if (countVal && totalRecords !== null) {
+                countVal.textContent = totalRecords.toLocaleString('es-AR');
+                dom.resultsCount.classList.remove("hidden");
+            }
         });
 
         dom.searchBtn.addEventListener("click", () => {

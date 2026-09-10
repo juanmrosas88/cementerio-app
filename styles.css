@@ -280,7 +280,7 @@ body svg.w-3\.5.h-3\.5 {
 .header-description { margin:0 auto .35rem; max-width:350px; font-size:.78rem; line-height:1.35; font-weight:700; }
 .gps-note { margin:.25rem 0 0; font-size:.73rem; color:#222; }
 .gps-icon { color:#05a64f; font-size:1rem; margin-right:.2rem; }
-.app-shell, #app-root { width:100%; max-width:390px; margin:0 auto; }
+.app-shell, #app-root { width:100%; margin:0 auto; }
 .app-main { padding:0 1rem 9.25rem; }
 .search-section { padding-top:1rem; }
 .search-box { display:flex; align-items:stretch; border:1px solid #a9a9a9; border-radius:6px; overflow:hidden; background:#f8f8f8; }
@@ -317,19 +317,19 @@ body svg.w-3\.5.h-3\.5 {
 .maps-button { display:none; }
 .distance-badge { position:absolute; z-index:2; }
 .gps-warning { padding:.4rem .6rem; background:#fff; font-size:.7rem; }
-.app-footer { position:fixed; z-index:50; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:390px; background:#f1f1f1; border-top:0; color:#111; text-align:center; padding:.55rem 1rem .75rem; }
+.app-footer { background:#f1f1f1; border-top:0; color:#111; text-align:center; padding:.55rem 1rem .75rem; }
 .footer-actions { display:flex; justify-content:center; align-items:center; gap:1.2rem; margin-bottom:.35rem; }
 .footer-action { padding:0; border:0; background:none; color:#009b4c; font-size:1.25rem; font-weight:400; }
 .footer-action span { display:none; }
 .copyright { margin:0; font-size:.63rem; font-weight:800; }
 .footer-logo { display:block; width:auto; height:42px; max-width:150px; margin:.65rem auto 0; }
 footer a:hover { color:#087a43; }
-@media (min-width:500px) { .app-header,.app-main,.app-footer { border-left:1px solid #aaa; border-right:1px solid #aaa; } }
+@media (min-width:500px) { .app-header,.app-main,.app-footer { border-left:0; border-right:0; } }
 
 /* Compatibilidad con el markup existente */
 body > header { position:static; background:#f1f1f1; box-shadow:none; color:#111; text-align:center; padding:.85rem 1rem .55rem; }
 body > header > div { padding:0; }
-body > header > div > div:first-child { display:block; }
+body > header > div > div:first-child { display:flex; align-items:center; justify-content:center; width:100%; }
 body > header > div > div:first-child > a { display:block; }
 body > header img { height:58px; width:auto; max-width:85%; padding:0; border-radius:0; background:transparent; }
 body > header h1 { display:none; }
@@ -339,9 +339,9 @@ body > header > div > div:last-child { margin:.25rem 0 0; padding:0; background:
 body > header > div > div:last-child svg { display:none; }
 body > header > div > div:last-child p { font-size:.72rem; margin:0; }
 body > header > div > div:last-child p::before { content:'●'; color:#00a94f; font-size:.85rem; margin-right:.25rem; }
-body > main#app-root { max-width:390px; padding:0 1rem 8rem; background:#fff; }
+body > main#app-root { padding:0 1rem 2rem; background:#fff; }
 body > main#app-root > section:first-child > div:first-child > label { display:none; }
-body > footer { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:390px; z-index:50; background:#f1f1f1; color:#111; border:0; padding:.55rem 1rem .75rem; text-align:center; }
+body > footer { background:#f1f1f1; color:#111; border:0; padding:.55rem 1rem .75rem; text-align:center; }
 body > footer > div { padding:0; }
 body > footer > div > div:first-child { display:flex; justify-content:center; gap:1rem; margin:0 0 .25rem; }
 body > footer a { padding:.15rem .45rem; border:0; border-radius:0; background:transparent; color:#009b4c; box-shadow:none; font-size:1.2rem; }
@@ -353,7 +353,7 @@ body > footer > div > div:last-child span { display:block; color:#111; font-size
 body > footer img { height:42px; opacity:1; }
 
 /* Estructura semántica del documento */
-.header-shell { max-width:390px; margin:0 auto; padding:0; }
+.header-shell { margin:0 auto; padding:0; }
 .brand-row { display:flex; align-items:center; justify-content:center; }
 .brand-link { display:block; }
 .brand-copy { display:block; min-width:0; }
@@ -365,3 +365,116 @@ body > footer img { height:42px; opacity:1; }
 .search-label { display:none; }
 .search-section { margin:0; }
 .footer-actions { display:flex; }
+
+/* ---------- Ajustes visuales de controles y mapa ---------- */
+.brand-row { width:100%; justify-content:center; text-align:center; }
+body > header .brand-row { display:flex !important; align-items:center; justify-content:center; width:100%; }
+.brand-link { width:max-content; margin:0 auto; }
+.whatsapp-btn,
+.whatsapp-btn:hover,
+.whatsapp-btn:focus-visible {
+    background:transparent !important;
+    box-shadow:none !important;
+    animation:none;
+}
+#distance-badge {
+    position:absolute;
+    top:1rem;
+    left:1rem;
+    z-index:1000;
+    pointer-events:none;
+}
+#distance-badge > span {
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    padding:.42rem .75rem;
+    border-radius:999px;
+    background:#fff;
+    color:#087a43;
+    border:1px solid rgba(8,122,67,.12);
+    box-shadow:0 2px 8px rgba(0,0,0,.18);
+    font-size:.78rem;
+    font-weight:700;
+    line-height:1.1;
+    white-space:nowrap;
+}
+#distance-badge svg { width:1rem; height:1rem; flex:0 0 1rem; }
+.map-card { position:relative; overflow:hidden; border:1px solid #222; border-radius:12px; }
+#btn-back {
+    display:inline-flex;
+    align-items:center;
+    gap:.4rem;
+    margin-top:.75rem;
+    padding:.42rem .85rem;
+    border:1px solid rgba(8,122,67,.14);
+    border-radius:999px;
+    background:#fff;
+    color:#087a43;
+    box-shadow:0 2px 8px rgba(0,0,0,.14);
+    font-size:.78rem;
+    font-weight:700;
+    font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height:1.1;
+}
+#btn-back:hover { background:#e8f5e9; color:#056334; }
+#btn-back svg { width:1rem; height:1rem; }
+
+/* ---------- Layout responsive final ---------- */
+html, body { min-width: 0; }
+body.app-body { display:flex; flex-direction:column; min-height:100vh; background:#fff; }
+body > header.app-header,
+body > main#app-root,
+body > footer.app-footer {
+    width:100%;
+    max-width:none;
+    border-left:0;
+    border-right:0;
+}
+body > header.app-header { flex:0 0 auto; padding:clamp(1rem, 3vw, 2rem) clamp(1rem, 5vw, 4rem) 1rem; }
+.header-shell { width:100%; max-width:1200px; margin:0 auto; }
+body > header img { width:auto; height:clamp(4rem, 10vw, 7rem); max-width:min(90vw, 700px); }
+body > main#app-root { flex:1 0 auto; padding:0 clamp(1rem, 5vw, 4rem) 2rem; }
+.view { width:100%; max-width:1100px; margin:0 auto; }
+.search-intro { padding:clamp(1.25rem, 3vw, 2.25rem) 0 1rem; text-align:center; }
+.search-intro h1 { margin:0 0 .65rem; font-size:clamp(1.25rem, 2.5vw, 2rem); line-height:1.2; }
+.search-intro p { max-width:42rem; margin:.35rem auto; font-size:clamp(.9rem, 1.5vw, 1.1rem); line-height:1.45; font-weight:700; }
+.search-intro .gps-note { font-size:clamp(.8rem, 1.2vw, .95rem); font-weight:500; }
+.search-section { max-width:900px; margin:0 auto; }
+.results-grid { grid-template-columns:repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
+.record-map-button { position:absolute; right:1rem; bottom:1rem; display:inline-flex; align-items:center; justify-content:center; width:2.25rem; height:2.25rem; color:#00a94f; border-radius:50%; }
+.record-map-button:hover { background:#e8f5e9; color:#087a43; }
+.record-map-button svg { width:1.45rem; height:1.45rem; }
+.record-data { padding-right:2.5rem; }
+.map-card { position:relative; width:100%; }
+#map-container { height:clamp(300px, 55vw, 600px); min-height:300px; border-radius:12px; }
+.map-card.map-loaded { border-color:transparent; }
+.map-card.map-loaded #map-container { border-radius:12px; }
+#distance-badge { top:1rem; left:1rem; }
+body > footer.app-footer { position:static; transform:none; flex:0 0 auto; padding:0; background:#f1f1f1; }
+body > footer > div { width:100%; max-width:1100px; margin:0 auto; }
+body > footer > div > div:first-child { padding:1rem clamp(1rem, 5vw, 4rem) .65rem; }
+body > footer > div > div:last-child { background:#fff; padding:1rem clamp(1rem, 5vw, 4rem) 1.25rem; }
+body > footer img { width:auto; height:auto; max-width:min(70vw, 220px); object-fit:contain; }
+body > footer a { font-size:0; }
+body > footer a svg { width:1.4rem; height:1.4rem; }
+
+@media (min-width: 768px) {
+    .view-map { padding-top:1.5rem; }
+    .view-map .record-card { max-width:900px; margin-left:auto; margin-right:auto; }
+    .view-map .map-card { max-width:1100px; margin-left:auto; margin-right:auto; }
+}
+
+@media (max-width: 480px) {
+    body > header img { max-width:95vw; }
+    .record-data { padding-right:2rem; }
+    #map-container { min-height:280px; }
+}
+
+/* El logo debe conservar su ancho natural y quedar centrado dentro del header. */
+body > header .brand-logo {
+    width:auto;
+    max-width:min(90vw, 700px);
+    margin-left:auto;
+    margin-right:auto;
+}

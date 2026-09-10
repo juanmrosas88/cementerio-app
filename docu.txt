@@ -30,6 +30,10 @@ node server.js
 # Modo desarrollo (con auto-reload si cambiás algo):
 npx nodemon server.js
 
+o
+
+ npm run dev
+
 # Instalar dependencias (si es necesario):
 npm install
 
