@@ -348,7 +348,6 @@ const app = (() => {
         const newPos = { lat: record.latitud, lng: record.longitud };
 
         placeTargetMarker(record);
-        targetInfoWindow.open({ anchor: targetMarker, map, shouldFocus: false });
 
         currentTargetCoords = newPos;
         map.panTo(newPos);
@@ -455,10 +454,7 @@ const app = (() => {
         showDistanceBadge();
     }
 
-    /**
-     * Dibuja la línea punteada y actualiza el badge de distancia.
-     * @param {boolean} [fitBounds=true] — Ajusta zoom solo en la primera llamada.
-     */
+    /** Dibuja la línea punteada y actualiza el badge de distancia. */
     function updateDistanceAndLine(userLatLng, targetLat, targetLng, fitBounds = true) {
         if (!map) return;
 
@@ -488,12 +484,9 @@ const app = (() => {
             map
         });
 
-        if (fitBounds) {
-            const bounds = new google.maps.LatLngBounds();
-            bounds.extend(userPos);
-            bounds.extend(targetPos);
-            map.fitBounds(bounds, 60);
-        }
+        // La vista siempre queda centrada en la parcela destino; no se
+        // ajusta el encuadre para incluir la posición del usuario.
+        void fitBounds;
     }
 
     function startDistanceUpdates() {
