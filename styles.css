@@ -299,12 +299,14 @@ body svg.w-3\.5.h-3\.5 {
 .results-count svg { display:none; }
 .result-card .card-data .data-label { color:#111; }
 .view-map { padding-top:.8rem; }
-.back-row { margin-bottom:.65rem; }
+.back-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.65rem; }
 .back-button { border:0; background:none; color:#087a43; font-weight:700; padding:.2rem 0; cursor:pointer; }
 .record-card { position:relative; border:1px solid #222; border-radius:7px; padding:.8rem 1rem; box-shadow:none; }
 #record-header { position:relative; border:1px solid #222; border-radius:7px; padding:.8rem 1rem; margin:0 0 .7rem; background:#fff; box-shadow:none; }
 .record-name { margin:0 0 .45rem; font-size:1rem; text-transform:uppercase; }
 #record-name { margin:0 0 .45rem; font-size:1rem; color:#111; text-transform:uppercase; }
+.record-card-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:.75rem; margin-bottom:.45rem; }
+.record-card-heading .record-name { min-width:0; margin:0; }
 .record-data { display:grid; grid-template-columns:1fr 1fr; gap:.25rem .8rem; font-size:.76rem; }
 .record-data > div { display:flex; align-items:baseline; gap:.25rem; min-width:0; white-space:nowrap; }
 .record-data > div:nth-child(5) { grid-column:1 / -1; }
@@ -454,10 +456,11 @@ body > main#app-root { flex:1 0 auto; padding:0 clamp(1rem, 5vw, 4rem) 2rem; }
 .search-intro .gps-note { font-size:clamp(.8rem, 1.2vw, .95rem); font-weight:500; }
 .search-section { max-width:900px; margin:0 auto; }
 .results-grid { grid-template-columns:repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
-.record-map-button { position:absolute; right:1rem; bottom:1rem; display:inline-flex; align-items:center; justify-content:center; width:2.25rem; height:2.25rem; color:#00a94f; border-radius:50%; }
-.record-map-button:hover { background:#e8f5e9; color:#087a43; }
-.record-map-button svg { width:1.45rem; height:1.45rem; }
-.record-data { padding-right:2.5rem; }
+.record-map-button { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; flex:0 0 auto; min-height:2.35rem; padding:.42rem .85rem; border:1px solid rgba(8,122,67,.14); border-radius:999px; background:#fff; color:#087a43; box-shadow:0 2px 8px rgba(0,0,0,.14); font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size:.78rem; font-weight:700; line-height:1.1; }
+.record-map-button:hover { color:#056334; background:#e8f5e9; border-color:rgba(8,122,67,.22); }
+.record-map-button:active { transform:translateY(1px); }
+.record-map-button svg { width:1.1rem; height:1.1rem; flex:0 0 auto; }
+.record-data { padding-right:0; }
 .map-card { position:relative; width:100%; }
 #map-container { height:clamp(300px, 55vw, 600px); min-height:300px; border-radius:12px; }
 .map-card.map-loaded { border-color:transparent; }
@@ -473,13 +476,16 @@ body > footer a svg { width:1.4rem; height:1.4rem; }
 
 @media (min-width: 768px) {
     .view-map { padding-top:1.5rem; }
+    .view-map .back-row { max-width:900px; margin-left:auto; margin-right:auto; }
     .view-map .record-card { max-width:900px; margin-left:auto; margin-right:auto; }
     .view-map .map-card { max-width:1100px; margin-left:auto; margin-right:auto; }
 }
 
 @media (max-width: 480px) {
     body > header img { max-width:95vw; }
-    .record-data { padding-right:2rem; }
+    .back-row { align-items:flex-start; }
+    .record-card-heading { align-items:flex-start; gap:.5rem; }
+    .record-map-button { max-width:58%; text-align:center; }
     #map-container { min-height:280px; }
 }
 

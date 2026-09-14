@@ -126,7 +126,16 @@
 
             <!-- Ficha del fallecido -->
             <div id="record-header" class="record-card">
-                <h2 id="record-name" class="record-name"></h2>
+                <div class="record-card-heading">
+                    <h2 id="record-name" class="record-name"></h2>
+                    <a id="record-google-maps" class="record-map-button" href="#" target="_blank" rel="noopener noreferrer">
+                        <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z" />
+                            <circle cx="12" cy="10" r="2.25" />
+                        </svg>
+                        Llegar en Google Maps
+                    </a>
+                </div>
                 <div class="record-data">
                     <div>
                         <b>Nac.</b>
@@ -149,12 +158,6 @@
                         <span id="record-parcela"></span>
                     </div>
                 </div>
-                <a id="record-google-maps" class="record-map-button" href="#" target="_blank" rel="noopener noreferrer" aria-label="Abrir ubicación en Google Maps" title="Abrir ubicación en Google Maps">
-                    <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z" />
-                        <circle cx="12" cy="10" r="2.25" />
-                    </svg>
-                </a>
             </div>
 
             <!-- Contenedor del mapa -->
