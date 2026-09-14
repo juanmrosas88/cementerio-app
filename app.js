@@ -73,11 +73,11 @@ const app = (() => {
     /** Mapeo de sector a color. */
     function getSectorColor(sector) {
         const colorMap = {
-            'AMARILLO': '#FFD700',
-            'AZUL':     '#4285F4',
-            'NARANJA':  '#FF9800',
-            'VERDE':    '#4CAF50',
-            'VIOLETA':  '#9C27B0',
+            'AMARILLO': '#FFC200',
+            'AZUL':     '#2C3592',
+            'NARANJA':  '#F57C17',
+            'VERDE':    '#8CBF26',
+            'VIOLETA':  '#C2529B',
         };
         return colorMap[sector] || (typeof getColorForSector === 'function' ? getColorForSector(sector) : '#0B6B3A');
     }
@@ -316,7 +316,7 @@ const app = (() => {
         if (targetInfoWindow) targetInfoWindow.close();
 
         const position = { lat: record.latitud, lng: record.longitud };
-        const color = record.color_sector || getSectorColor(record.sector || record.nivel);
+        const color = getSectorColor(record.sector || record.nivel);
 
         targetMarker = new google.maps.Marker({
             position,

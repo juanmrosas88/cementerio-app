@@ -11,11 +11,11 @@ INPUT_CSV = 'content_app_buscar/cp_parcelas.csv'
 OUTPUT_JS = 'data.js'
 
 SECTOR_COLORS = {
-    'AMARILLO': '#FFD700',
-    'AZUL': '#4285F4',
-    'NARANJA': '#FF9800',
-    'VERDE': '#4CAF50',
-    'VIOLETA': '#9C27B0',
+    'AMARILLO': '#FFC200',
+    'AZUL': '#2C3592',
+    'NARANJA': '#F57C17',
+    'VERDE': '#8CBF26',
+    'VIOLETA': '#C2529B',
 }
 
 
@@ -40,13 +40,12 @@ def main():
             lat, lng = parse_wkb_hex(row['geom'].strip())
             parcelas.append({
                 'id': i + 1,
-                'nombre': row['extinto'].strip(),
+                'extinto': row['extinto'].strip(),
                 'sector': row['sector'].strip(),
                 'lote': row['lote'].strip(),
-                'nro': row['nro'].strip(),
+                'numero_parcela': row['nro'].strip(),
                 'latitud': lat,
                 'longitud': lng,
-                'color_sector': SECTOR_COLORS.get(row['sector'].strip(), '#888888'),
             })
 
     parcelas_json = json.dumps(parcelas, ensure_ascii=False, indent=2)
@@ -54,13 +53,13 @@ def main():
     js = r'''// data.js — Mock data generated from cp_parcelas.csv
 // %d parcelas reales del cementerio
 
-// Colores por sector (reales del CSV)
+// Colores por sector; el color se deriva del sector, no se duplica en cada registro.
 const sectorColors = {
-    'AMARILLO': '#FFD700',
-    'AZUL': '#4285F4',
-    'NARANJA': '#FF9800',
-    'VERDE': '#4CAF50',
-    'VIOLETA': '#9C27B0',
+    'AMARILLO': '#FFC200',
+    'AZUL': '#2C3592',
+    'NARANJA': '#F57C17',
+    'VERDE': '#8CBF26',
+    'VIOLETA': '#C2529B',
 };
 
 function getColorForSector(sector) {
@@ -75,10 +74,10 @@ function buscarParcelas(texto) {
     if (!texto || texto.trim() === '') return parcelas;
     const lower = texto.toLowerCase();
     return parcelas.filter(p =>
-        (p.nombre && p.nombre.toLowerCase().includes(lower)) ||
+        (p.extinto && p.extinto.toLowerCase().includes(lower)) ||
         (p.sector && p.sector.toLowerCase().includes(lower)) ||
         (p.lote && String(p.lote).includes(lower)) ||
-        (p.nro && String(p.nro).includes(lower)) ||
+        (p.numero_parcela && String(p.numero_parcela).includes(lower)) ||
         (String(p.id).includes(lower))
     );
 }
@@ -108,7 +107,7 @@ async function fetchParcelaById(id) {
         return json;
     } catch (err) {
         console.warn('[Mock] fetchParcelaById fallback:', err.message);
-        return parcelas.find(p => p.id === id) || null;
+        return parcelas.find(p => String(p.id) === String(id)) || null;
     }
 }
 ''' % (len(parcelas), parcelas_json)
