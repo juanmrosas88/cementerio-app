@@ -25465,6 +25465,16 @@ async function fetchParcelas(query) {
     }
 }
 
+// Normalización de mock para que coincida con el esquema de PostgreSQL:
+// agrega nacimiento/defuncion (vacíos, no existen en el CSV) y numero_parcela (desde nro).
+// Nota: no sobreescribe color_sector — el frontend lo usa si está presente.
+parcelas.forEach(p => {
+    if (p.numero_parcela === undefined) p.numero_parcela = p.nro;
+    if (p.nacimiento === undefined) p.nacimiento = null;
+    if (p.defuncion === undefined) p.defuncion = null;
+    if (p.nivel === undefined) p.nivel = null;
+});
+
 // Fetch parcela by ID from API, fallback a mock
 async function fetchParcelaById(id) {
     console.log('[Fetch] fetchParcelaById id:', id);

@@ -320,7 +320,7 @@ body svg.w-3\.5.h-3\.5 {
 .app-footer { background:#f1f1f1; border-top:0; color:#111; text-align:center; padding:.55rem 1rem .75rem; }
 .footer-actions { display:flex; justify-content:center; align-items:center; gap:1.2rem; margin-bottom:.35rem; }
 .footer-action { padding:0; border:0; background:none; color:#009b4c; font-size:1.25rem; font-weight:400; }
-.footer-action span { display:none; }
+.footer-action span:not(.fa-stack) { display:none; }
 .copyright { margin:0; font-size:.63rem; font-weight:800; }
 .footer-logo { display:block; width:auto; height:42px; max-width:150px; margin:.65rem auto 0; }
 footer a:hover { color:#087a43; }
@@ -376,6 +376,18 @@ body > header .brand-row { display:flex !important; align-items:center; justify-
     background:transparent !important;
     box-shadow:none !important;
     animation:none;
+}
+
+/* Ajuste fino del foco dentro del globo del icono combinado */
+.wa-bulb {
+    transform: translateY(-2px);
+}
+
+/* Icono SVG del chatbot en el footer — mismo tamaño que el ícono del mapa */
+.footer-icon-svg {
+    width: 20px;
+    height: 20px;
+    display: block;
 }
 #distance-badge {
     position:absolute;

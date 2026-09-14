@@ -107,6 +107,7 @@ function buildParcelasQuery(searchTerm = null) {
             TO_CHAR(defuncion,  'YYYY-MM-DD') AS defuncion,
             nivel,
             lote,
+            TRIM(sector)    AS sector,
             numero_parcela,
             ST_Y(ST_Centroid(geom))  AS latitud,
             ST_X(ST_Centroid(geom))  AS longitud
@@ -213,6 +214,7 @@ app.get('/api/parcelas/:id', async (req, res) => {
                         TO_CHAR(defuncion, 'YYYY-MM-DD') AS defuncion,
                         nivel,
                         lote,
+                        TRIM(sector) AS sector,
                         numero_parcela,
                         ST_Y(ST_Centroid(geom)) AS latitud,
                         ST_X(ST_Centroid(geom)) AS longitud
