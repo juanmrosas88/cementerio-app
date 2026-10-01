@@ -42,6 +42,7 @@ const app = (() => {
         resultsGrid:    $("#results-grid"),
         emptyState:     $("#empty-state"),
         resultsCount:   $("#results-count"),
+        resultsCountLoading: $("#results-count-loading"),
         btnBack:        $("#btn-back"),
         recordName:     $("#record-name"),
         recordBirthTxt: $("#record-birth-text"),
@@ -168,6 +169,13 @@ const app = (() => {
     function renderCards(records) {
         const grid = dom.resultsGrid;
 
+        const escapeHtml = (value) => String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+
         if (records.length === 0) {
             grid.innerHTML = "";
             dom.emptyState.classList.remove("hidden");
@@ -179,32 +187,32 @@ const app = (() => {
         const html = records.map((r, index) => {
             return `
                 <article class="result-card"
-                         data-id="${r.id}"
+                         data-id="${escapeHtml(r.id)}"
                          data-record-index="${index}"
                          role="button"
                          tabindex="0"
-                         aria-label="Ver ubicación de ${r.extinto}">
-                    <div class="card-name">${r.extinto}</div>
+                         aria-label="Ver ubicación de ${escapeHtml(r.extinto)}">
+                    <div class="card-name">${escapeHtml(r.extinto)}</div>
                     <div class="card-data">
                         <div class="data-row">
                             <span class="data-label">Nac.</span>
-                            <span>${r.nacimiento ? formatDate(r.nacimiento) : '—'}</span>
+                            <span>${escapeHtml(r.nacimiento ? formatDate(r.nacimiento) : '—')}</span>
                         </div>
                         <div class="data-row">
                             <span class="data-label">Def.</span>
-                            <span>${r.defuncion ? formatDate(r.defuncion) : '—'}</span>
+                            <span>${escapeHtml(r.defuncion ? formatDate(r.defuncion) : '—')}</span>
                         </div>
                         <div class="data-row">
                             <span class="data-label">Sec.</span>
-                            <span>${r.sector || r.nivel || '—'}</span>
+                            <span>${escapeHtml(r.sector || r.nivel || '—')}</span>
                         </div>
                         <div class="data-row">
                             <span class="data-label">Lot.</span>
-                            <span>${r.lote || '—'}</span>
+                            <span>${escapeHtml(r.lote || '—')}</span>
                         </div>
                         <div class="data-row">
                             <span class="data-label">Par.</span>
-                            <span>${r.numero_parcela || r.nro || r.id || '—'}</span>
+                            <span>${escapeHtml(r.numero_parcela || r.nro || r.id || '—')}</span>
                         </div>
                     </div>
                 </article>
@@ -528,23 +536,38 @@ const app = (() => {
         dom.gpsWarning.classList.add("hidden");
     }
 
+    /** Oculta el indicador de carga del contador de registros. */
+    function hideRecordsLoading() {
+        if (dom.resultsCountLoading) {
+            dom.resultsCountLoading.classList.add("hidden");
+        }
+    }
+
     function initApp() {
         console.log('[App] initApp — DOM:', dom.searchInput ? 'OK' : 'FALTA', '| fetchParcelas:', typeof window.fetchParcelas);
 
         if (!dom.searchInput || !dom.searchBtn) {
             console.error('[App] Elementos DOM no encontrados. Verificar IDs en index.html');
+            hideRecordsLoading();
             return;
         }
 
         // El contador es el total de registros de la base, no la cantidad filtrada.
-        window.fetchParcelas('').then((records) => {
-            totalRecords = Array.isArray(records) ? records.length : null;
-            const countVal = document.getElementById('results-count-value');
-            if (countVal && totalRecords !== null) {
-                countVal.textContent = totalRecords.toLocaleString('es-AR');
-                dom.resultsCount.classList.remove("hidden");
-            }
-        });
+        window.fetchParcelas('')
+            .then((records) => {
+                totalRecords = Array.isArray(records) ? records.length : null;
+                const countVal = document.getElementById('results-count-value');
+                if (countVal && totalRecords !== null) {
+                    countVal.textContent = totalRecords.toLocaleString('es-AR');
+                    dom.resultsCount.classList.remove("hidden");
+                }
+            })
+            .catch((err) => {
+                console.error('[App] Error al cargar el total de registros:', err);
+            })
+            .finally(() => {
+                hideRecordsLoading();
+            });
 
         dom.searchBtn.addEventListener("click", () => {
             filterRecords(dom.searchInput.value);

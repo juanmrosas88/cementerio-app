@@ -297,6 +297,31 @@ body svg.w-3\.5.h-3\.5 {
 .result-card .card-name { color:#111; font-size:.98rem; margin:0 0 .45rem; text-transform:uppercase; }
 .result-card .card-data { font-size:.76rem; grid-template-columns:1fr 1fr; gap:.2rem .8rem; }
 .results-count svg { display:none; }
+
+/* ---------- Indicador de carga de registros ---------- */
+.results-count-loading {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .45rem;
+}
+.results-count-loading .spinner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(8,122,67,.18);
+    border-top-color: #087a43;
+    animation: jdr-spin .7s linear infinite;
+    flex: 0 0 auto;
+}
+@keyframes jdr-spin {
+    to { transform: rotate(360deg); }
+}
+/* .results-count-loading define display:flex, lo que le ganaría a .hidden
+   (misma especificidad, regla más abajo). Esta regla más específica
+   asegura que la clase hidden sí lo oculte. */
+.results-count-loading.hidden { display: none; }
+
 .result-card .card-data .data-label { color:#111; }
 .view-map { padding-top:.8rem; }
 .back-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.65rem; }
