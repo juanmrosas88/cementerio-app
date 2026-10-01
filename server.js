@@ -1,299 +1,355 @@
 /**
- * server.js — Backend API para el Cementerio Parque Memorial
- * Conecta a PostgreSQL con fallback a datos mock (data.js)
- *
- * Uso:
- *   npm install
- *   cp .env.example .env  (editar con tus credenciales)
- *   node server.js
+ * Backend API para el Cementerio Parque Memorial.
+ * Usa PostgreSQL cuando está disponible y conserva el fallback local.
  */
 
 require('dotenv').config();
+
 const express = require('express');
+const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const PORT = (process.env.PORT && process.env.PORT !== '0') ? parseInt(process.env.PORT) : 3000;
+const PUBLIC_DIR = __dirname;
+const PORT = parsePort(process.env.PORT, 3000);
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const MAX_QUERY_LENGTH = 100;
+const DEFAULT_PAGE_SIZE = 250;
+const MAX_PAGE_SIZE = 1000;
+const MAX_TRACKED_IPS = 10_000;
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX_REQUESTS = 120;
 
 let pool = null;
 let dbAvailable = false;
-let dbLastError = null;
+let mockData = { parcelas: [], sectorColors: {}, stats: {} };
 
-/**
- * Intenta conectar a PostgreSQL. Si falla, se usa datos mock.
- */
-async function initDatabase() {
-    try {
-        const { Pool } = require('pg');
-        pool = new Pool({
-            host: process.env.DB_HOST,
-            port: parseInt(process.env.DB_PORT || '5432'),
-            user: process.env.DB_USER,
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_NAME,
-            max: 10,
-            idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: 3000,
-        });
-
-        const res = await pool.query('SELECT NOW()');
-        console.log('✅ Conectado a PostgreSQL:', res.rows[0].now);
-
-        const cols = await pool.query(`
-            SELECT column_name, data_type
-            FROM information_schema.columns
-            WHERE table_name = 'v_ocup_parcelas'
-              AND table_schema = 'servsoc'
-            ORDER BY ordinal_position
-        `);
-        if (cols.rows.length > 0) {
-            console.log('📊 Columnas de servsoc.v_ocup_parcelas:');
-            cols.rows.forEach(r => console.log(`   ${r.column_name} (${r.data_type})`));
-        } else {
-            console.log('⚠️  No se encontraron columnas para servsoc.v_ocup_parcelas');
-        }
-
-        dbAvailable = true;
-        dbLastError = null;
-    } catch (err) {
-        dbLastError = err;
-        console.error('⚠️  PostgreSQL no disponible, usando datos mock:', err.message);
-        console.error('Detalles del error DB:', err.stack);
-        dbAvailable = false;
-    }
+function parsePort(value, fallback) {
+    const port = Number.parseInt(value, 10);
+    return Number.isInteger(port) && port > 0 && port <= 65535 ? port : fallback;
 }
 
-let mockData = null;
+function parsePageValue(value, fallback, max) {
+    const parsed = Number.parseInt(String(value ?? ''), 10);
+    return Number.isInteger(parsed) && parsed >= 0 ? Math.min(parsed, max) : fallback;
+}
 
-/**
- * Carga los datos mock desde data.js y calcula estadísticas.
- */
+function publicError(res, status, message) {
+    return res.status(status).json({ error: message });
+}
+
+function logDatabaseError(context, err) {
+    const code = err && err.code ? ` code=${err.code}` : '';
+    console.error(`[DB] ${context}${code}: ${err && err.message ? err.message : 'error desconocido'}`);
+    if (NODE_ENV !== 'production' && err && err.stack) console.error(err.stack);
+}
+
+/** Extrae literales JSON sin evaluar ni ejecutar data.js. */
+function extractJsonDeclaration(source, declaration) {
+    const marker = `const ${declaration} =`;
+    const markerIndex = source.indexOf(marker);
+    if (markerIndex < 0) throw new Error(`Declaración ausente: ${declaration}`);
+    const firstToken = source.slice(markerIndex + marker.length).search(/[\[{]/);
+    if (firstToken < 0) throw new Error(`Literal ausente: ${declaration}`);
+
+    const jsonStart = markerIndex + marker.length + firstToken;
+    const opener = source[jsonStart];
+    const closer = opener === '[' ? ']' : '}';
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+
+    for (let index = jsonStart; index < source.length; index += 1) {
+        const char = source[index];
+        if (inString) {
+            if (escaped) escaped = false;
+            else if (char === '\\') escaped = true;
+            else if (char === '"') inString = false;
+            continue;
+        }
+        if (char === '"') {
+            inString = true;
+            continue;
+        }
+        if (char === opener) depth += 1;
+        if (char === closer) {
+            depth -= 1;
+            if (depth === 0) return JSON.parse(source.slice(jsonStart, index + 1));
+        }
+    }
+    throw new Error(`Literal incompleto: ${declaration}`);
+}
+
 function loadMockData() {
     try {
-        const dataPath = path.join(__dirname, 'data.js');
-        const content = fs.readFileSync(dataPath, 'utf8');
-        const fn = new Function(content + '; return { parcelas, sectorColors, getColorForSector, buscarParcelas };');
-        mockData = fn();
-
-        mockData.stats = {
-            totalParcelas: mockData.parcelas.length,
-            totalHuérfanas: mockData.parcelas.length,
-            totalExtintas: 0,
-            sectores: Object.keys(mockData.sectorColors).length,
+        const content = fs.readFileSync(path.join(PUBLIC_DIR, 'data.js'), 'utf8');
+        const parcelas = extractJsonDeclaration(content, 'parcelas');
+        const sectorColors = extractJsonDeclaration(content, 'sectorColors');
+        if (!Array.isArray(parcelas) || !sectorColors || typeof sectorColors !== 'object') {
+            throw new Error('Formato de mock inválido');
+        }
+        mockData = {
+            parcelas,
+            sectorColors,
+            stats: {
+                totalParcelas: parcelas.length,
+                totalHuérfanas: parcelas.length,
+                totalExtintas: 0,
+                sectores: Object.keys(sectorColors).length,
+            },
         };
-        console.log(`📦 Mock data cargado: ${mockData.parcelas.length} parcelas`);
+        console.log(`Mock data cargado: ${parcelas.length} parcelas`);
     } catch (err) {
-        console.error('❌ Error cargando data.js:', err.message);
+        console.error(`No se pudo cargar el mock: ${err.message}`);
         mockData = { parcelas: [], sectorColors: {}, stats: {} };
     }
 }
 
-/**
- * Construye la query SQL para buscar parcelas.
- *
- * Columnas de la vista servsoc.v_ocup_parcelas:
- *   parcela, extinto, nacimiento, defuncion, nivel, geom (PostGIS polygon SRID 4326)
- *
- * @param {string|null} searchTerm — Texto de búsqueda (filtro por nombre del extinto)
- * @returns {{ query: string, params: string[] }}
- */
-function buildParcelasQuery(searchTerm = null) {
-    let query = `
-        SELECT
-            parcela          AS id,
-            TRIM(extinto)    AS extinto,
-            TO_CHAR(nacimiento, 'YYYY-MM-DD') AS nacimiento,
-            TO_CHAR(defuncion,  'YYYY-MM-DD') AS defuncion,
-            nivel,
-            lote,
-            TRIM(sector)    AS sector,
-            numero_parcela,
-            ST_Y(ST_Centroid(geom))  AS latitud,
-            ST_X(ST_Centroid(geom))  AS longitud
-        FROM servsoc.v_ocup_parcelas
-    `;
-    const params = [];
-
-    if (searchTerm) {
-        params.push(`%${searchTerm.toUpperCase()}%`);
-        query += ` WHERE UPPER(extinto) LIKE $1`;
+async function initDatabase() {
+    if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_NAME) {
+        console.warn('PostgreSQL no configurado; se usará el mock local.');
+        return;
     }
+    try {
+        const { Pool } = require('pg');
+        pool = new Pool({
+            host: process.env.DB_HOST,
+            port: parsePort(process.env.DB_PORT, 5432),
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_NAME,
+            max: 10,
+            min: 0,
+            idleTimeoutMillis: 30_000,
+            connectionTimeoutMillis: 3_000,
+            statement_timeout: 5_000,
+            query_timeout: 6_000,
+        });
+        pool.on('error', (err) => logDatabaseError('error de conexión idle', err));
+        await pool.query('SELECT 1');
+        dbAvailable = true;
+        console.log('Conectado a PostgreSQL.');
+    } catch (err) {
+        dbAvailable = false;
+        logDatabaseError('PostgreSQL no disponible; se usará el mock', err);
+        if (pool) {
+            await pool.end().catch(() => {});
+            pool = null;
+        }
+    }
+}
 
-    query += ' ORDER BY extinto';
+function escapeLike(value) {
+    return value.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
+function buildParcelasQuery(searchTerm = null, limit = DEFAULT_PAGE_SIZE, offset = 0) {
+    let query = `
+        SELECT parcela AS id, TRIM(extinto) AS extinto,
+               TO_CHAR(nacimiento, 'YYYY-MM-DD') AS nacimiento,
+               TO_CHAR(defuncion, 'YYYY-MM-DD') AS defuncion,
+               nivel, lote, TRIM(sector) AS sector, numero_parcela,
+               ST_Y(ST_Centroid(geom)) AS latitud,
+               ST_X(ST_Centroid(geom)) AS longitud
+        FROM servsoc.v_ocup_parcelas`;
+    const params = [];
+    if (searchTerm) {
+        params.push(`%${escapeLike(searchTerm.trim().toUpperCase())}%`);
+        query += " WHERE UPPER(extinto) LIKE $1 ESCAPE '\\\\'";
+    }
+    params.push(limit, offset);
+    query += ` ORDER BY extinto LIMIT $${params.length - 1} OFFSET $${params.length}`;
     return { query, params };
 }
 
-app.use(express.json());
+function buscarParcelas(texto, limit, offset) {
+    const query = String(texto || '').trim().toLocaleLowerCase();
+    const filtered = query
+        ? mockData.parcelas.filter((p) =>
+            (p.extinto && String(p.extinto).toLocaleLowerCase().includes(query)) ||
+            (p.sector && String(p.sector).toLocaleLowerCase().includes(query)) ||
+            (p.lote !== null && p.lote !== undefined && String(p.lote).includes(query)) ||
+            (p.numero_parcela !== null && p.numero_parcela !== undefined && String(p.numero_parcela).includes(query)) ||
+            String(p.id).includes(query))
+        : mockData.parcelas;
+    return { total: filtered.length, data: filtered.slice(offset, offset + limit) };
+}
 
+app.disable('x-powered-by');
 app.use((req, res, next) => {
-    console.log(`[REQ] ${new Date().toISOString()} ${req.method} ${req.url}`);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'geolocation=(self)');
+    res.setHeader('Content-Security-Policy', "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' https://maps.googleapis.com https://maps.gstatic.com 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.gstatic.com");
     next();
 });
 
-app.use(express.static(path.join(__dirname)));
+const corsOrigins = (process.env.CORS_ORIGINS || '').split(',').map((origin) => origin.trim()).filter(Boolean);
+if (corsOrigins.length > 0) {
+    app.use(cors({
+        origin: (origin, callback) => {
+            if (!origin || corsOrigins.includes(origin)) return callback(null, true);
+            return callback(new Error('Origen CORS no permitido'));
+        },
+        methods: ['GET', 'OPTIONS'], credentials: false,
+    }));
+}
 
-/** GET /api/health — Estado de la API */
+app.use(express.json({ limit: '100kb' }));
+
+const rateBuckets = new Map();
+app.use('/api', (req, res, next) => {
+    const now = Date.now();
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    const current = rateBuckets.get(ip);
+    if (!current || now - current.startedAt >= RATE_WINDOW_MS) {
+        if (!rateBuckets.has(ip) && rateBuckets.size >= MAX_TRACKED_IPS) {
+            return publicError(res, 503, 'Servicio temporalmente saturado');
+        }
+        rateBuckets.set(ip, { startedAt: now, count: 1 });
+    } else {
+        current.count += 1;
+        if (current.count > RATE_MAX_REQUESTS) {
+            res.setHeader('Retry-After', '60');
+            return publicError(res, 429, 'Demasiadas solicitudes');
+        }
+    }
+    for (const [key, bucket] of rateBuckets) {
+        if (now - bucket.startedAt >= RATE_WINDOW_MS * 2) rateBuckets.delete(key);
+    }
+    next();
+});
+
+app.use((req, res, next) => {
+    console.log(`[REQ] ${new Date().toISOString()} ${req.method} ${req.path}`);
+    next();
+});
+
+const publicFiles = [
+    'index.html', 'app.js', 'bootstrap.js', 'data.js', 'styles.css',
+    'icon_sugerencia.svg', 'logoheader.svg',
+];
+for (const filename of publicFiles) {
+    app.get(`/${filename}`, (req, res) => res.sendFile(path.join(PUBLIC_DIR, filename)));
+}
+app.use('/content_app_buscar', express.static(path.join(PUBLIC_DIR, 'content_app_buscar'), {
+    dotfiles: 'deny', index: false, redirect: false,
+}));
+
 app.get('/api/health', async (req, res) => {
     if (dbAvailable) {
         try {
             const result = await pool.query('SELECT COUNT(*) AS total FROM servsoc.v_ocup_parcelas');
-            return res.json({
-                status: 'ok',
-                source: 'postgresql',
-                total_registros: parseInt(result.rows[0].total),
-                timestamp: new Date().toISOString()
-            });
+            return res.json({ status: 'ok', source: 'postgresql', total_registros: Number(result.rows[0].total), timestamp: new Date().toISOString() });
         } catch (err) {
-            dbLastError = err;
-            console.error('[API] Query de health PostgreSQL falló:', err.message);
-            console.error('Stack:', err.stack);
-        }
-    } else {
-        console.log('[API] Health endpoint llamado pero DB no está disponible. Último error DB:', dbLastError ? dbLastError.message : 'Ninguno registrado');
-    }
-
-    res.json({
-        status: 'ok',
-        source: 'mocke',
-        error_db: dbLastError ? dbLastError.message : null,
-        total_registros: mockData ? mockData.parcelas.length : 0,
-        timestamp: new Date().toISOString()
-    });
-});
-
-/** GET /api/allcolumn — Trae 5 registros con todas sus columnas (para depuración) */
-app.get('/api/allcolumn', async (req, res) => {
-    if (dbAvailable) {
-        try {
-            const result = await pool.query('SELECT * FROM servsoc.v_ocup_parcelas LIMIT 5');
-            return res.json({ data: result.rows, source: 'postgresql' });
-        } catch (err) {
-            console.error('[API] Query de allcolumn falló:', err.message);
-            return res.status(500).json({ error: 'Error al consultar la base de datos', detalle: err.message });
-        }
-    }
-
-    res.status(500).json({ error: 'PostgreSQL no está disponible actualmente.' });
-});
-
-/** GET /api/parcelas?q=texto — Búsqueda de parcelas */
-app.get('/api/parcelas', async (req, res) => {
-    const { q } = req.query;
-
-    if (dbAvailable) {
-        try {
-            const { query, params } = buildParcelasQuery(q);
-            const result = await pool.query(query, params);
-            console.log(`[API] PostgreSQL: ${result.rows.length} registros` + (q ? ` (búsqueda: "${q}")` : ''));
-            return res.json({ data: result.rows, count: result.rows.length, source: 'postgresql' });
-        } catch (err) {
-            console.error('[API] Query PostgreSQL falló:', err.message);
+            logDatabaseError('health falló', err);
             dbAvailable = false;
         }
     }
-
-    if (mockData) {
-        const results = q ? mockData.buscarParcelas(q) : mockData.parcelas;
-        console.log(`[API] Mock: ${results.length} registros` + (q ? ` (búsqueda: "${q}")` : ''));
-        return res.json({ data: results, count: results.length, source: 'mock' });
-    }
-
-    res.status(500).json({ error: 'No hay datos disponibles' });
+    return res.status(200).json({ status: 'degraded', source: 'mock', total_registros: mockData.parcelas.length, timestamp: new Date().toISOString() });
 });
 
-/** GET /api/parcelas/:id — Detalle de una parcela por ID */
+app.get('/api/allcolumn', async (req, res) => {
+    if (process.env.ENABLE_DEBUG_ENDPOINTS !== 'true') return publicError(res, 404, 'Ruta no encontrada');
+    if (!dbAvailable) return publicError(res, 503, 'PostgreSQL no está disponible');
+    try {
+        const result = await pool.query(`
+            SELECT parcela AS id, TRIM(extinto) AS extinto, nivel, lote,
+                   TRIM(sector) AS sector, numero_parcela
+            FROM servsoc.v_ocup_parcelas LIMIT 5`);
+        return res.json({ data: result.rows, source: 'postgresql' });
+    } catch (err) {
+        logDatabaseError('allcolumn falló', err);
+        return publicError(res, 500, 'Error al consultar la base de datos');
+    }
+});
+
+app.get('/api/parcelas', async (req, res) => {
+    const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+    if (q.length > MAX_QUERY_LENGTH) return publicError(res, 400, `El parámetro q no puede superar ${MAX_QUERY_LENGTH} caracteres`);
+    const limit = parsePageValue(req.query.limit, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
+    const offset = parsePageValue(req.query.offset, 0, 100_000);
+    if (dbAvailable) {
+        try {
+            const { query, params } = buildParcelasQuery(q || null, limit, offset);
+            const result = await pool.query(query, params);
+            return res.json({ data: result.rows, count: result.rows.length, limit, offset, source: 'postgresql' });
+        } catch (err) {
+            logDatabaseError('búsqueda PostgreSQL falló', err);
+            dbAvailable = false;
+        }
+    }
+    const result = buscarParcelas(q, limit, offset);
+    return res.json({ data: result.data, count: result.data.length, total: result.total, limit, offset, source: 'mock' });
+});
+
 app.get('/api/parcelas/:id', async (req, res) => {
     const { id } = req.params;
-
+    if (!/^[0-9]+$/.test(id)) return publicError(res, 400, 'Identificador inválido');
     if (dbAvailable) {
         try {
-            const result = await pool.query(
-                `SELECT parcela AS id, TRIM(extinto) AS extinto,
-                        TO_CHAR(nacimiento, 'YYYY-MM-DD') AS nacimiento,
-                        TO_CHAR(defuncion, 'YYYY-MM-DD') AS defuncion,
-                        nivel,
-                        lote,
-                        TRIM(sector) AS sector,
-                        numero_parcela,
-                        ST_Y(ST_Centroid(geom)) AS latitud,
-                        ST_X(ST_Centroid(geom)) AS longitud
-                 FROM servsoc.v_ocup_parcelas
-                 WHERE parcela = $1`,
-                [id]
-            );
-            if (result.rows.length > 0) {
-                return res.json({ data: result.rows[0] });
-            }
+            const result = await pool.query(`
+                SELECT parcela AS id, TRIM(extinto) AS extinto,
+                       TO_CHAR(nacimiento, 'YYYY-MM-DD') AS nacimiento,
+                       TO_CHAR(defuncion, 'YYYY-MM-DD') AS defuncion,
+                       nivel, lote, TRIM(sector) AS sector, numero_parcela,
+                       ST_Y(ST_Centroid(geom)) AS latitud,
+                       ST_X(ST_Centroid(geom)) AS longitud
+                FROM servsoc.v_ocup_parcelas WHERE parcela = $1`, [id]);
+            if (result.rows.length > 0) return res.json({ data: result.rows[0] });
         } catch (err) {
-            console.error('[API] Query PostgreSQL falló:', err.message);
+            logDatabaseError('detalle PostgreSQL falló', err);
             dbAvailable = false;
         }
     }
-
-    if (mockData) {
-        const parcela = mockData.parcelas.find(p => String(p.id) === String(id));
-        if (parcela) return res.json({ data: parcela });
-    }
-
-    res.status(404).json({ error: 'Parcela no encontrada' });
+    const parcela = mockData.parcelas.find((p) => String(p.id) === id);
+    return parcela ? res.json({ data: parcela }) : publicError(res, 404, 'Parcela no encontrada');
 });
 
-/** GET /api/stats — Estadísticas generales */
 app.get('/api/stats', async (req, res) => {
     if (dbAvailable) {
         try {
             const result = await pool.query(`
-                SELECT
-                    COUNT(*) AS total_parcelas,
-                    COUNT(DISTINCT nivel) AS total_niveles,
-                    nivel,
-                    COUNT(*) AS cantidad
-                FROM servsoc.v_ocup_parcelas
-                GROUP BY nivel
-                ORDER BY nivel
-            `);
-
-            return res.json({
-                total_parcelas: result.rows.reduce((sum, r) => sum + parseInt(r.cantidad), 0),
-                niveles: result.rows,
-                source: 'postgresql'
-            });
+                SELECT nivel, COUNT(*) AS cantidad
+                FROM servsoc.v_ocup_parcelas GROUP BY nivel ORDER BY nivel`);
+            return res.json({ total_parcelas: result.rows.reduce((sum, row) => sum + Number(row.cantidad), 0), niveles: result.rows, source: 'postgresql' });
         } catch (err) {
-            console.error('[API] Stats PostgreSQL falló:', err.message);
+            logDatabaseError('stats PostgreSQL falló', err);
             dbAvailable = false;
         }
     }
+    return res.json({ ...mockData.stats, source: 'mock' });
+});
 
-    if (mockData && mockData.stats) {
-        return res.json({ ...mockData.stats, source: 'mock' });
+app.get('/api/sectores', (req, res) => res.json(mockData.sectorColors));
+app.use('/api', (req, res) => publicError(res, 404, 'Ruta API no encontrada'));
+
+// Fallback SPA solo para navegación; nunca sirve un archivo arbitrario.
+app.get('*', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
+
+app.use((err, req, res, next) => {
+    if (err && err.type === 'entity.too.large') return publicError(res, 413, 'Solicitud demasiado grande');
+    if (err) {
+        console.error(`[HTTP] ${err.message}`);
+        return publicError(res, 500, 'Error interno del servidor');
     }
-
-    res.status(500).json({ error: 'No hay datos disponibles' });
+    return next();
 });
 
-/** GET /api/sectores — Colores por sector */
-app.get('/api/sectores', (req, res) => {
-    if (mockData) {
-        return res.json(mockData.sectorColors);
-    }
-    res.json({});
-});
-
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+async function shutdown(signal) {
+    console.log(`${signal}: cerrando servidor`);
+    if (pool) await pool.end().catch((err) => logDatabaseError('cierre del pool falló', err));
+    process.exit(0);
+}
+process.once('SIGTERM', () => shutdown('SIGTERM'));
+process.once('SIGINT', () => shutdown('SIGINT'));
 
 (async () => {
     loadMockData();
     await initDatabase();
-
-    app.listen(PORT, () => {
-        console.log(`\n╔══════════════════════════════════════════════════════════════╗`);
-        console.log(`║  🏛️  Cementerio Parque Memorial — API Server               ║`);
-        console.log(`║  Puerto: ${String(PORT).padEnd(48)}║`);
-        console.log(`║  Fuente: ${(dbAvailable ? 'PostgreSQL' : 'Mock (data.js)').padEnd(49)}║`);
-        console.log(`║  Vista: servsoc.v_ocup_parcelas                            ║`);
-        console.log(`╚══════════════════════════════════════════════════════════════╝\n`);
-    });
+    app.listen(PORT, () => console.log(`Servidor escuchando en el puerto ${PORT} (${dbAvailable ? 'PostgreSQL' : 'mock'})`));
 })();
+
+module.exports = { app, buildParcelasQuery, extractJsonDeclaration };

@@ -98,6 +98,10 @@ DB_PORT=5432
 DB_USER=usuario
 DB_PASSWORD=contraseña
 DB_NAME=base_de_datos
+# Orígenes CORS permitidos, separados por coma. Vacío = solo same-origin.
+CORS_ORIGINS=
+# Solo desarrollo local; mantener desactivado en producción.
+ENABLE_DEBUG_ENDPOINTS=false
 ```
 
 `server.js` intenta conectarse a PostgreSQL al iniciar. Si la conexión falla, carga automáticamente los registros de `data.js` como fallback.
@@ -241,13 +245,64 @@ https://www.coovilros.com/descargas/mapajardindelrosario.pdf
 
 Los datos de fallback deben mantenerse en UTF-8 para conservar correctamente caracteres como `Ñ`, `Á`, `É`, `Ü` y otros nombres propios.
 
-## Consideraciones de seguridad y despliegue
+## Reglas de seguridad implementadas
+
+`server.js` aplica las siguientes reglas de forma activa:
+
+### Cabeceras de seguridad
+
+- `X-Powered-By` deshabilitado (`app.disable('x-powered-by')`).
+- `X-Content-Type-Options: nosniff` — evita la interpretación de tipos MIME incorrectos.
+- `X-Frame-Options: DENY` — impide incrustar la app en iframes (anti clickjacking).
+- `Referrer-Policy: strict-origin-when-cross-origin` — limita el referente enviado.
+- `Permissions-Policy: geolocation=(self)` — solo la app puede usar geolocalización.
+- `Content-Security-Policy` restrictiva: `default-src 'self'`, `base-uri 'self'`, `frame-ancestors 'none'`, `object-src 'none'`; `script-src`/`style-src` permiten Google Maps/Fonts e `'unsafe-inline'` (requerido por la SPA vanilla); `img-src` admite `data:`/`blob:` y dominios de Google.
+
+### CORS
+
+- Configurable mediante `CORS_ORIGINS` (lista separada por comas).
+- Vacío = solo solicitudes same-origin; un origen no listado recibe un error de CORS.
+- Solo métodos `GET` y `OPTIONS`, sin credenciales (`credentials: false`).
+
+### Rate limiting
+
+- 120 solicitudes por minuto por IP en `/api` (`RATE_MAX_REQUESTS` / `RATE_WINDOW_MS`).
+- Exceso: `429` con `Retry-After: 60`.
+- Máximo 10 000 IPs rastreadas (`MAX_TRACKED_IPS`); al saturarse se responde `503`.
+- Los depósitos expirados se limpian automáticamente.
+
+### Validación y límites de entrada
+
+- `q` máximo 100 caracteres (`MAX_QUERY_LENGTH`); exceso → `400`.
+- `limit` máximo 1000 (por defecto 250) y `offset` máximo 100 000; valores inválidos caen al valor por defecto.
+- `:id` debe ser numérico (`/^[0-9]+$/`); si no → `400`.
+- Cuerpo JSON limitado a 100 KB; exceso → `413`.
+
+### Protección de la base de datos
+
+- Solo consultas parametrizadas (`$1`, `$2`, …); nunca interpolación de strings.
+- `LIKE` con cláusula `ESCAPE` y `escapeLike()` para neutralizar `%`, `_` y `\` en el término de búsqueda.
+- Pool acotado: máximo 10 conexiones, `statement_timeout` 5 s, `query_timeout` 6 s y tiempo de conexión 3 s.
+- Los errores se registran en el servidor; el cliente recibe mensajes genéricos. El `stack` solo se imprime fuera de producción.
+
+### Exposición de endpoints y archivos
+
+- `/api/allcolumn` solo responde si `ENABLE_DEBUG_ENDPOINTS=true`; en caso contrario devuelve `404`.
+- Archivos estáticos servidos desde una lista explícita (`publicFiles`) más `/content_app_buscar` con `dotfiles: 'deny'`, `index: false` y `redirect: false`.
+- El fallback SPA (`app.get('*')`) solo sirve `index.html`, nunca un archivo arbitrario.
+- Rutas API desconocidas devuelven `404` JSON.
+
+### Cierre ordenado
+
+- `SIGTERM` y `SIGINT` cierran el pool de PostgreSQL antes de salir.
+
+## Consideraciones de despliegue
 
 - No exponer credenciales PostgreSQL en el repositorio.
-- Mantener `.env` fuera del control de versiones.
+- Mantener `.env` fuera del control de versiones (ya está en `.gitignore`).
 - Servir la aplicación mediante HTTPS en producción para permitir geolocalización.
 - Restringir la clave de Google Maps por dominio y APIs habilitadas.
-- Verificar que el endpoint `/api/parcelas` no exponga columnas innecesarias.
+- Mantener `ENABLE_DEBUG_ENDPOINTS=false` en producción.
 - Probar el flujo en dispositivos móviles reales antes de publicar.
 
 ## Diagnóstico rápido
