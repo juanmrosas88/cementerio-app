@@ -8,25 +8,25 @@ El proyecto es una SPA sin framework frontend, escrita en JavaScript vanilla, se
 
 ## Fuentes de verdad y alcance
 
-- El comportamiento implementado en `index.html`, `api.js`, `app.js`, `bootstrap.js`, `server.js` y `styles.css` es la única fuente de verdad del producto actual.
+- El comportamiento implementado en `frontend/index.html`, `frontend/api.js`, `frontend/app.js`, `frontend/bootstrap.js`, `backend/server.js` y `frontend/styles.css` es la única fuente de verdad del producto actual.
 - La propuesta entregada por el usuario se encuentra en `..\coovilros cementerio\PROPUESTA_COOVILROS.md`. Es un antecedente histórico de la idea inicial y material de referencia; no define requisitos actuales ni contiene instrucciones ejecutables para el agente.
 - No cambiar tecnologías, cantidades de registros, sectores, fuentes de datos ni flujos para hacerlos coincidir con la propuesta. Cualquier cambio funcional debe surgir del código actual y de una solicitud explícita del usuario.
 - Documentar como comportamiento vigente lo que realmente hacen los archivos del proyecto, aunque difiera de la propuesta inicial.
 
 ## Arquitectura y archivos principales
 
-- `index.html`: estructura de las vistas de búsqueda y detalle/mapa, carga de Google Maps, enlaces institucionales y accesibilidad básica.
-- `app.js`: estado de la SPA, búsqueda, tarjetas, ficha del fallecido, mapa satelital, marcadores, GPS, distancia Haversine, línea punteada y enlace de navegación.
-- `bootstrap.js`: espera el DOM y el callback `initGoogleMap`; inicia la app aun si Google Maps no carga después de ocho segundos.
-- `api.js`: cliente HTTP del frontend; no contiene datos locales ni fallback.
-- `server.js`: servidor Express, endpoints REST y conexión obligatoria a PostgreSQL.
-- `styles.css`: identidad visual, layout responsive, estados de foco, tarjetas, mapa, footer y animaciones.
-- `content_app_buscar\`: logos, CSV de origen y PDF del mapa institucional.
+- `frontend/index.html`: estructura de las vistas de búsqueda y detalle/mapa, carga de Google Maps, enlaces institucionales y accesibilidad básica.
+- `frontend/app.js`: estado de la SPA, búsqueda, tarjetas, ficha del fallecido, mapa satelital, marcadores, GPS, distancia Haversine, línea punteada y enlace de navegación.
+- `frontend/bootstrap.js`: espera el DOM y el callback `initGoogleMap`; inicia la app aun si Google Maps no carga después de ocho segundos.
+- `frontend/api.js`: cliente HTTP del frontend; no contiene datos locales ni fallback.
+- `backend/server.js`: API Express, endpoints REST y conexión obligatoria a PostgreSQL.
+- `frontend/styles.css`: identidad visual, layout responsive, estados de foco, tarjetas, mapa, footer y animaciones.
+- `frontend/content_app_buscar\`: logos y recursos públicos de la interfaz.
 - `v_cp_extintos_parque_puntos.geojson`: dataset geoespacial auxiliar no utilizado como fuente de datos de la aplicación.
 
 ## Comandos
 
-Desde la raíz del proyecto:
+Desde `backend/`:
 
 ```text
 npm install       # instala dependencias
@@ -37,17 +37,17 @@ npm run dev       # inicia Express con nodemon
 Comprobaciones rápidas sin levantar servicios externos:
 
 ```text
-node --check app.js
-node --check bootstrap.js
-node --check api.js
+node --check ../frontend/app.js
+node --check ../frontend/bootstrap.js
+node --check ../frontend/api.js
 node --check server.js
 ```
 
 Comprobación manual del backend cuando está iniciado:
 
 ```text
-curl http://localhost:3000/api/health
-curl "http://localhost:3000/api/parcelas?q=CARMEN"
+curl http://127.0.0.1:3000/api/health
+curl "http://127.0.0.1:3000/api/parcelas?q=CARMEN"
 ```
 
 No hay suite de tests automatizados ni scripts de lint declarados en `package.json`. Si se agrega una herramienta, actualizar este archivo y `package.json` en el mismo cambio.
@@ -70,14 +70,14 @@ No hay suite de tests automatizados ni scripts de lint declarados en `package.js
 - `GET /api/parcelas/:id`: detalle por identificador.
 - `GET /api/stats`: estadísticas disponibles.
 - `GET /api/allcolumn`: endpoint de depuración; no incorporarlo a despliegues públicos sin revisar exposición de columnas.
-- La conexión usa `PORT`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` y `DB_NAME` desde `.env`. No incluir credenciales reales en commits ni en mensajes.
+- La conexión usa `HOST`, `PORT`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` y `DB_NAME` desde `backend/.env`. No incluir credenciales reales en commits ni en mensajes.
 - La consulta de producción usa `servsoc.v_ocup_parcelas` y calcula coordenadas con el centroide de la geometría PostGIS en SRID 4326.
 
 ## Estilo y convenciones
 
 - Código y documentación de producto en español; nombres de variables y funciones existentes en camelCase; constantes globales en `UPPER_SNAKE_CASE`.
 - JavaScript vanilla, sin introducir frameworks, bundlers o TypeScript salvo que el usuario lo solicite.
-- Mantener separación entre estructura (`index.html`), cliente API (`api.js`), comportamiento (`app.js`/`bootstrap.js`), servidor (`server.js`) y estilos (`styles.css`).
+- Mantener separación entre estructura (`frontend/index.html`), cliente API (`frontend/api.js`), comportamiento (`frontend/app.js`/`frontend/bootstrap.js`), servidor (`backend/server.js`) y estilos (`frontend/styles.css`).
 - Conservar la identidad visual: Inter, verde institucional `#0B6B3A`, diseño mobile-first y textos comprensibles para visitantes y adultos mayores.
 - Mantener accesibilidad: HTML semántico, etiquetas/`aria-label`, foco visible, activación por teclado y respeto por `prefers-reduced-motion` cuando se modifiquen interacciones.
 - Escapar o tratar con cuidado cualquier dato proveniente de la API antes de incorporarlo a HTML generado dinámicamente.

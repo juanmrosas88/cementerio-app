@@ -8,7 +8,7 @@ La fuente de verdad es el código y los datos de PostgreSQL consultados por el r
 
 ## Contexto y objetivo
 
-La aplicación implementa una experiencia mobile-first accesible desde un enlace web. Puede publicarse detrás de un QR en la cartelería, pero ese QR pertenece al entorno de despliegue y no forma parte del código. El sistema permite buscar por datos simples, distinguir homónimos con fechas y ubicación, ver el objetivo en un mapa satelital y recibir orientación aproximada desde la posición del dispositivo.
+La aplicación implementa una experiencia mobile-first accesible desde un enlace web. El frontend está compuesto por archivos estáticos publicados por IIS y el backend Express se ejecuta como servicio local, con PostgreSQL accesible únicamente desde ese backend. Puede publicarse detrás de un QR en la cartelería, pero ese QR pertenece al entorno de despliegue y no forma parte del código. El sistema permite buscar por datos simples, distinguir homónimos con fechas y ubicación, ver el objetivo en un mapa satelital y recibir orientación aproximada desde la posición del dispositivo.
 
 ## Usuarios y actores
 
@@ -68,7 +68,7 @@ La API utiliza los nombres `id`, `extinto`, `nacimiento`, `defuncion`, `nivel`, 
 
 ### Origen de datos
 
-- Fuente única: vista PostgreSQL/PostGIS `servsoc.v_ocup_parcelas`; `server.js` calcula el centroide de `geom` y lo expresa en WGS84/EPSG:4326.
+- Fuente única: vista PostgreSQL/PostGIS `servsoc.v_ocup_parcelas`; `backend/server.js` calcula el centroide de `geom` y lo expresa en WGS84/EPSG:4326.
 
 ## Requisitos no funcionales
 

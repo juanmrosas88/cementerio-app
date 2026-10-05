@@ -21,33 +21,37 @@ La persona usuaria puede buscar un fallecido por nombre o apellido, seleccionar 
 
 ## Arquitectura
 
-La aplicación no utiliza un bundler ni un framework frontend. Está compuesta por una SPA de JavaScript vanilla y un servidor Express que sirve los archivos y expone la API de parcelas.
+La aplicación no utiliza un bundler ni un framework frontend. Está compuesta por una SPA de JavaScript vanilla publicada por IIS y un backend Express separado que expone únicamente la API de parcelas.
 
 ### Flujo de arranque
 
-1. `api.js` consulta los endpoints del backend; no contiene registros locales.
-2. `app.js` define la lógica de búsqueda, tarjetas, detalle, mapa y GPS.
-3. `bootstrap.js` espera a que estén listos el DOM y Google Maps.
-4. Cuando ambas dependencias están listas, `bootstrap.js` ejecuta `window.app.initApp()`.
-5. Si Google Maps no carga en ocho segundos, la búsqueda se inicializa igualmente y el mapa queda no disponible hasta que pueda cargarse.
+1. IIS sirve los archivos de `frontend/` y reenvía `/api/*` al backend Node local.
+2. `api.js` consulta los endpoints del backend; no contiene registros locales.
+3. `app.js` define la lógica de búsqueda, tarjetas, detalle, mapa y GPS.
+4. `bootstrap.js` espera a que estén listos el DOM y Google Maps.
+5. Cuando ambas dependencias están listas, `bootstrap.js` ejecuta `window.app.initApp()`.
+6. Si Google Maps no carga en ocho segundos, la búsqueda se inicializa igualmente y el mapa queda no disponible hasta que pueda cargarse.
 
 ## Estructura del proyecto
 
 ```text
 .
-├── index.html                         # Documento principal y estructura de vistas
-├── styles.css                         # Diseño responsive e identidad visual
-├── app.js                             # Lógica de búsqueda, detalle, mapa y GPS
-├── bootstrap.js                       # Inicialización coordinada de la aplicación
-├── api.js                              # Cliente HTTP sin datos locales
-├── server.js                           # Servidor Express y API REST
-├── package.json                        # Scripts y dependencias del backend
-├── logoheader.svg                      # Favicon institucional
-├── v_cp_extintos_parque_puntos.geojson # Geodatos auxiliares
-└── content_app_buscar/
-    ├── logo_jdr.png                    # Logo del header
-    ├── logo_coovilros.png              # Logo del footer
-    └── Cementerio_app_ubica_parcela.pdf
+├── frontend/                           # Archivos publicados por IIS
+│   ├── index.html
+│   ├── styles.css
+│   ├── app.js
+│   ├── bootstrap.js
+│   ├── api.js
+│   ├── web.config
+│   └── content_app_buscar/
+├── backend/                            # API Node y configuración privada
+│   ├── server.js
+│   ├── package.json
+│   ├── package-lock.json
+│   └── .env
+├── AGENTS.md
+├── README.md
+└── spec.md
 ```
 
 ## Requisitos
@@ -60,22 +64,25 @@ La aplicación no utiliza un bundler ni un framework frontend. Está compuesta p
 
 ## Instalación y ejecución
 
-Instalar dependencias:
+Instalar dependencias del backend:
 
 ```bash
+cd backend
 npm install
 ```
 
-Iniciar el servidor:
+Iniciar solamente la API:
 
 ```bash
 npm start
 ```
 
-La aplicación queda disponible en:
+La API queda disponible internamente en:
 
 ```text
-http://localhost:3000
+http://127.0.0.1:3000
+
+En producción, IIS publica el frontend y reenvía las rutas `/api/*` a esa API local.
 ```
 
 Durante el desarrollo puede utilizarse:
@@ -91,6 +98,7 @@ El script `dev` utiliza `nodemon` para reiniciar el servidor cuando cambian los 
 Crear un archivo `.env` a partir de `.env.example`:
 
 ```env
+HOST=127.0.0.1
 PORT=3000
 DB_HOST=localhost
 DB_PORT=5432
@@ -103,7 +111,7 @@ CORS_ORIGINS=
 ENABLE_DEBUG_ENDPOINTS=false
 ```
 
-`server.js` intenta conectarse a PostgreSQL al iniciar. Si la conexión falla, mantiene la aplicación disponible pero responde `503` en los endpoints de datos; el frontend bloquea la búsqueda y ofrece el reclamo por WhatsApp.
+`backend/server.js` intenta conectarse a PostgreSQL al iniciar. Si la conexión falla, mantiene la API disponible pero responde `503` en los endpoints de datos; el frontend bloquea la búsqueda y ofrece el reclamo por WhatsApp.
 
 La consulta de producción utiliza la vista:
 
@@ -123,6 +131,14 @@ Los campos esperados incluyen:
 - `geom` como geometría PostGIS
 
 Las coordenadas se obtienen calculando el centroide de `geom` con SRID 4326.
+
+## Despliegue en IIS
+
+IIS debe publicar únicamente la carpeta `frontend/`. El archivo `frontend/web.config` reenvía `/api/*` al backend Node en `http://127.0.0.1:3000` y aplica el fallback de la SPA.
+
+El backend se ejecuta desde `backend/` como servicio de Windows mediante NSSM. La cuenta del servicio necesita acceso de lectura al código y a `backend/.env`, pero ese archivo no debe estar dentro de `frontend/` ni publicado por IIS.
+
+En producción, abrir únicamente los puertos 80 y 443. El puerto 3000 debe permanecer vinculado a `127.0.0.1` y no exponerse en el firewall.
 
 ## API
 
@@ -196,7 +212,7 @@ La precisión del GPS puede variar. La aplicación informa un margen estimado de
 
 ### Google Maps
 
-El mapa se carga desde Google Maps JavaScript API. La clave se referencia desde `index.html` mediante el callback global `initGoogleMap`.
+El mapa se carga desde Google Maps JavaScript API. La clave se referencia desde `frontend/index.html` mediante el callback global `initGoogleMap`.
 
 La aplicación utiliza:
 
@@ -228,7 +244,7 @@ https://www.coovilros.com/descargas/mapajardindelrosario.pdf
 
 ## Reglas de seguridad implementadas
 
-`server.js` aplica las siguientes reglas de forma activa:
+`backend/server.js` aplica las siguientes reglas de forma activa:
 
 ### Cabeceras de seguridad
 
@@ -270,7 +286,7 @@ https://www.coovilros.com/descargas/mapajardindelrosario.pdf
 
 - `/api/allcolumn` solo responde si `ENABLE_DEBUG_ENDPOINTS=true`; en caso contrario devuelve `404`.
 - Archivos estáticos servidos desde una lista explícita (`publicFiles`) más `/content_app_buscar` con `dotfiles: 'deny'`, `index: false` y `redirect: false`.
-- El fallback SPA (`app.get('*')`) solo sirve `index.html`, nunca un archivo arbitrario.
+- IIS sirve solamente archivos de `frontend/` y aplica el fallback SPA definido en `frontend/web.config`.
 - Rutas API desconocidas devuelven `404` JSON.
 
 ### Cierre ordenado
@@ -280,7 +296,7 @@ https://www.coovilros.com/descargas/mapajardindelrosario.pdf
 ## Consideraciones de despliegue
 
 - No exponer credenciales PostgreSQL en el repositorio.
-- Mantener `.env` fuera del control de versiones (ya está en `.gitignore`).
+- Mantener `backend/.env` fuera del control de versiones (ya está en `.gitignore`).
 - Servir la aplicación mediante HTTPS en producción para permitir geolocalización.
 - Restringir la clave de Google Maps por dominio y APIs habilitadas.
 - Mantener `ENABLE_DEBUG_ENDPOINTS=false` en producción.
@@ -291,7 +307,7 @@ https://www.coovilros.com/descargas/mapajardindelrosario.pdf
 Comprobar el backend:
 
 ```bash
-curl http://localhost:3000/api/health
+curl http://127.0.0.1:3000/api/health
 ```
 
 Si PostgreSQL no está disponible, `/api/health` y los endpoints de datos responden `503`; la interfaz muestra el mensaje de reclamo por WhatsApp.
@@ -299,7 +315,7 @@ Si PostgreSQL no está disponible, `/api/health` y los endpoints de datos respon
 Si la búsqueda no responde:
 
 1. Revisar la consola del navegador.
-2. Confirmar que `api.js`, `app.js` y `bootstrap.js` carguen sin errores.
+2. Confirmar que `frontend/api.js`, `frontend/app.js` y `frontend/bootstrap.js` carguen sin errores.
 3. Verificar que aparezca el mensaje `[App] Iniciando — DOM + Google Maps listos`.
 4. Comprobar que `/api/parcelas?q=...` devuelva JSON válido.
 

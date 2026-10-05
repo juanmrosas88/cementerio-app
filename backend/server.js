@@ -7,11 +7,10 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 
 const app = express();
-const PUBLIC_DIR = __dirname;
 const PORT = parsePort(process.env.PORT, 3000);
+const HOST = process.env.HOST || '127.0.0.1';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const MAX_QUERY_LENGTH = 100;
 const DEFAULT_PAGE_SIZE = 250;
@@ -151,17 +150,6 @@ app.use((req, res, next) => {
     next();
 });
 
-const publicFiles = [
-    'index.html', 'api.js', 'app.js', 'bootstrap.js', 'styles.css',
-    'icon_sugerencia.svg', 'logoheader.svg',
-];
-for (const filename of publicFiles) {
-    app.get(`/${filename}`, (req, res) => res.sendFile(path.join(PUBLIC_DIR, filename)));
-}
-app.use('/content_app_buscar', express.static(path.join(PUBLIC_DIR, 'content_app_buscar'), {
-    dotfiles: 'deny', index: false, redirect: false,
-}));
-
 app.get('/api/health', async (req, res) => {
     if (!dbAvailable) return publicError(res, 503, 'Servicio de datos no disponible');
     try {
@@ -245,12 +233,6 @@ app.get('/api/stats', async (req, res) => {
 
 app.use('/api', (req, res) => publicError(res, 404, 'Ruta API no encontrada'));
 
-// No publicar ni resolver antiguos artefactos de datos locales.
-app.get(['/data.js', '/generate_mock.py', '/scripts/export-db-mock.js', '/content_app_buscar/cp_parcelas.csv'], (req, res) => publicError(res, 404, 'Archivo no encontrado'));
-
-// Fallback SPA solo para navegación; nunca sirve un archivo arbitrario.
-app.get('*', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
-
 app.use((err, req, res, next) => {
     if (err && err.type === 'entity.too.large') return publicError(res, 413, 'Solicitud demasiado grande');
     if (err) {
@@ -270,7 +252,7 @@ process.once('SIGINT', () => shutdown('SIGINT'));
 
 (async () => {
     await initDatabase();
-    app.listen(PORT, () => console.log(`Servidor escuchando en el puerto ${PORT} (${dbAvailable ? 'PostgreSQL' : 'API no disponible'})`));
+    app.listen(PORT, HOST, () => console.log(`API escuchando en http://${HOST}:${PORT} (${dbAvailable ? 'PostgreSQL' : 'API no disponible'})`));
 })();
 
 module.exports = { app, buildParcelasQuery };
