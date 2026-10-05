@@ -63,17 +63,27 @@
                         autocorrect="off"
                         autocapitalize="off"
                         spellcheck="false"
+                        disabled
                     >
                     <button
                         type="button"
                         id="search-btn"
                         class="search-btn"
                         aria-label="Buscar"
+                        disabled
                     >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </button>
+                </div>
+
+                <div id="database-error" class="database-error hidden" role="alert" aria-live="assertive">
+                    <strong>El servicio de búsqueda no está disponible.</strong>
+                    <span>Por favor, realizá tu reclamo al bot de WhatsApp.</span>
+                    <a id="database-error-whatsapp" href="https://wa.me/5493573446630?text=Hola%2C%20quiero%20hacer%20un%20reclamo%20porque%20el%20buscador%20del%20cementerio%20no%20est%C3%A1%20disponible." target="_blank" rel="noopener noreferrer">
+                        Reclamar por WhatsApp
+                    </a>
                 </div>
 
                 <!-- Indicador de carga: visible desde que abre la app hasta que llegan los datos -->
@@ -237,7 +247,7 @@
         </div>
     </footer>
 
-    <script src="data.js"></script>
+    <script src="api.js"></script>
     <script src="app.js"></script>
     <script src="bootstrap.js"></script>
 </body>

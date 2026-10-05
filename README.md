@@ -16,7 +16,7 @@ La persona usuaria puede buscar un fallecido por nombre o apellido, seleccionar 
 - Enlace para abrir indicaciones a pie en Google Maps.
 - Acceso directo a WhatsApp con el mensaje `quiero informacion`.
 - Enlace al mapa institucional en PDF.
-- Fallback local con los registros incluidos en `data.js` cuando la API no está disponible.
+- Mensaje de indisponibilidad con acceso al bot de WhatsApp cuando PostgreSQL no está disponible.
 - Interfaz responsive orientada principalmente a dispositivos móviles.
 
 ## Arquitectura
@@ -25,7 +25,7 @@ La aplicación no utiliza un bundler ni un framework frontend. Está compuesta p
 
 ### Flujo de arranque
 
-1. `data.js` define los datos de fallback y las funciones de consulta.
+1. `api.js` consulta los endpoints del backend; no contiene registros locales.
 2. `app.js` define la lógica de búsqueda, tarjetas, detalle, mapa y GPS.
 3. `bootstrap.js` espera a que estén listos el DOM y Google Maps.
 4. Cuando ambas dependencias están listas, `bootstrap.js` ejecuta `window.app.initApp()`.
@@ -39,7 +39,7 @@ La aplicación no utiliza un bundler ni un framework frontend. Está compuesta p
 ├── styles.css                         # Diseño responsive e identidad visual
 ├── app.js                             # Lógica de búsqueda, detalle, mapa y GPS
 ├── bootstrap.js                       # Inicialización coordinada de la aplicación
-├── data.js                             # Fallback local y funciones de acceso a datos
+├── api.js                              # Cliente HTTP sin datos locales
 ├── server.js                           # Servidor Express y API REST
 ├── package.json                        # Scripts y dependencias del backend
 ├── logoheader.svg                      # Favicon institucional
@@ -47,7 +47,6 @@ La aplicación no utiliza un bundler ni un framework frontend. Está compuesta p
 └── content_app_buscar/
     ├── logo_jdr.png                    # Logo del header
     ├── logo_coovilros.png              # Logo del footer
-    ├── cp_parcelas.csv                 # Fuente de datos de fallback
     └── Cementerio_app_ubica_parcela.pdf
 ```
 
@@ -57,7 +56,7 @@ La aplicación no utiliza un bundler ni un framework frontend. Está compuesta p
 - npm.
 - Navegador moderno con soporte para geolocalización.
 - Clave válida de Google Maps JavaScript API configurada en `index.html`.
-- PostgreSQL/PostGIS sólo si se desea utilizar la base de datos remota.
+- PostgreSQL/PostGIS configurado y accesible; es obligatorio para utilizar la aplicación.
 
 ## Instalación y ejecución
 
@@ -104,7 +103,7 @@ CORS_ORIGINS=
 ENABLE_DEBUG_ENDPOINTS=false
 ```
 
-`server.js` intenta conectarse a PostgreSQL al iniciar. Si la conexión falla, carga automáticamente los registros de `data.js` como fallback.
+`server.js` intenta conectarse a PostgreSQL al iniciar. Si la conexión falla, mantiene la aplicación disponible pero responde `503` en los endpoints de datos; el frontend bloquea la búsqueda y ofrece el reclamo por WhatsApp.
 
 La consulta de producción utiliza la vista:
 
@@ -141,7 +140,7 @@ Devuelve el estado de la API, el origen de los datos y el total de registros.
 GET /api/parcelas?q=texto
 ```
 
-Sin `q`, devuelve todos los registros disponibles. Con `q`, filtra por el nombre del fallecido en PostgreSQL o utiliza el buscador local del fallback.
+Sin `q`, devuelve todos los registros disponibles desde PostgreSQL. Con `q`, filtra por el nombre del fallecido en PostgreSQL.
 
 Respuesta esperada:
 
@@ -180,14 +179,6 @@ GET /api/stats
 ```
 
 Devuelve el total de parcelas y el desglose por nivel.
-
-### Sectores
-
-```http
-GET /api/sectores
-```
-
-Devuelve los colores configurados para los sectores.
 
 ## Uso de la interfaz
 
@@ -234,16 +225,6 @@ quiero informacion
 ```text
 https://www.coovilros.com/descargas/mapajardindelrosario.pdf
 ```
-
-## Datos locales
-
-`data.js` contiene el fallback de registros y las funciones:
-
-- `buscarParcelas(texto)`
-- `fetchParcelas(query)`
-- `fetchParcelaById(id)`
-
-Los datos de fallback deben mantenerse en UTF-8 para conservar correctamente caracteres como `Ñ`, `Á`, `É`, `Ü` y otros nombres propios.
 
 ## Reglas de seguridad implementadas
 
@@ -313,12 +294,12 @@ Comprobar el backend:
 curl http://localhost:3000/api/health
 ```
 
-Si la respuesta indica `source: "mock"`, la aplicación está funcionando con `data.js` porque PostgreSQL no está disponible o falló la conexión.
+Si PostgreSQL no está disponible, `/api/health` y los endpoints de datos responden `503`; la interfaz muestra el mensaje de reclamo por WhatsApp.
 
 Si la búsqueda no responde:
 
 1. Revisar la consola del navegador.
-2. Confirmar que `app.js`, `data.js` y `bootstrap.js` carguen sin errores.
+2. Confirmar que `api.js`, `app.js` y `bootstrap.js` carguen sin errores.
 3. Verificar que aparezca el mensaje `[App] Iniciando — DOM + Google Maps listos`.
 4. Comprobar que `/api/parcelas?q=...` devuelva JSON válido.
 

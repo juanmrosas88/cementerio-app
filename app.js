@@ -31,6 +31,7 @@ const app = (() => {
     let currentTargetCoords = null;
     let distanceUpdateTimer = null;
     let totalRecords = null;
+    let databaseUnavailable = true;
 
     const $ = (sel) => document.querySelector(sel);
 
@@ -43,6 +44,8 @@ const app = (() => {
         emptyState:     $("#empty-state"),
         resultsCount:   $("#results-count"),
         resultsCountLoading: $("#results-count-loading"),
+        databaseError:  $("#database-error"),
+        databaseErrorWhatsapp: $("#database-error-whatsapp"),
         btnBack:        $("#btn-back"),
         recordName:     $("#record-name"),
         recordBirthTxt: $("#record-birth-text"),
@@ -58,6 +61,33 @@ const app = (() => {
         gpsWarningLink: $("#gps-warning-gmaps-link"),
         recordGoogleMaps: $("#record-google-maps"),
     };
+
+    function setSearchAvailability(enabled) {
+        if (dom.searchInput) {
+            dom.searchInput.disabled = !enabled;
+            dom.searchInput.setAttribute("aria-disabled", String(!enabled));
+        }
+        if (dom.searchBtn) {
+            dom.searchBtn.disabled = !enabled;
+            dom.searchBtn.setAttribute("aria-disabled", String(!enabled));
+        }
+    }
+
+    function showDatabaseError() {
+        databaseUnavailable = true;
+        totalRecords = null;
+        setSearchAvailability(false);
+        dom.resultsGrid.innerHTML = "";
+        dom.emptyState.classList.add("hidden");
+        dom.resultsCount.classList.add("hidden");
+        if (dom.databaseError) dom.databaseError.classList.remove("hidden");
+    }
+
+    function hideDatabaseError() {
+        databaseUnavailable = false;
+        setSearchAvailability(true);
+        if (dom.databaseError) dom.databaseError.classList.add("hidden");
+    }
 
     /** Formatea fecha ISO "YYYY-MM-DD" → "DD/MM/YYYY". */
     function formatDate(isoDate) {
@@ -135,6 +165,8 @@ const app = (() => {
     }
 
     async function filterRecords(query) {
+        if (databaseUnavailable) return;
+
         // No buscar si el input está vacío
         const trimmed = (query || '').trim();
         if (!trimmed) {
@@ -155,6 +187,7 @@ const app = (() => {
             }
 
             renderCards(records);
+            hideDatabaseError();
 
             const count = records.length;
             const countEl = document.getElementById("results-count");
@@ -163,6 +196,7 @@ const app = (() => {
             countVal.textContent = count.toLocaleString('es-AR');
         } catch (err) {
             console.error('[App] Error en filterRecords:', err);
+            showDatabaseError();
         }
     }
 
@@ -552,10 +586,14 @@ const app = (() => {
             return;
         }
 
+        setSearchAvailability(false);
+
         // El contador es el total de registros de la base, no la cantidad filtrada.
         window.fetchParcelas('')
             .then((records) => {
                 totalRecords = Array.isArray(records) ? records.length : null;
+                if (totalRecords === null) throw new Error('Respuesta de registros no válida');
+                hideDatabaseError();
                 const countVal = document.getElementById('results-count-value');
                 if (countVal && totalRecords !== null) {
                     countVal.textContent = totalRecords.toLocaleString('es-AR');
@@ -564,6 +602,7 @@ const app = (() => {
             })
             .catch((err) => {
                 console.error('[App] Error al cargar el total de registros:', err);
+                showDatabaseError();
             })
             .finally(() => {
                 hideRecordsLoading();

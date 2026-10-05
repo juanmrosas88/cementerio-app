@@ -322,6 +322,35 @@ body svg.w-3\.5.h-3\.5 {
    asegura que la clase hidden sí lo oculte. */
 .results-count-loading.hidden { display: none; }
 
+/* ---------- Servicio de datos no disponible ---------- */
+.database-error {
+    display:flex;
+    flex-direction:column;
+    gap:.45rem;
+    margin:1rem 0;
+    padding:.9rem 1rem;
+    border:1px solid #d99a35;
+    border-radius:8px;
+    background:#fff8e8;
+    color:#5f430d;
+    font-size:.82rem;
+    line-height:1.4;
+}
+.database-error a {
+    align-self:flex-start;
+    margin-top:.2rem;
+    padding:.45rem .7rem;
+    border-radius:6px;
+    background:#087a43;
+    color:#fff;
+    font-weight:700;
+    text-decoration:none;
+}
+.database-error a:hover,
+.database-error a:focus-visible { background:#065d33; }
+.search-input-field:disabled,
+.search-btn:disabled { cursor:not-allowed; opacity:.55; }
+
 .result-card .card-data .data-label { color:#111; }
 .view-map { padding-top:.8rem; }
 .back-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.65rem; }
