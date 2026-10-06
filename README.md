@@ -21,15 +21,15 @@ La persona usuaria puede buscar un fallecido por nombre o apellido, seleccionar 
 
 ## Arquitectura
 
-La aplicación no utiliza un bundler ni un framework frontend. Está compuesta por una SPA de JavaScript vanilla publicada por IIS y un backend Express separado que expone únicamente la API de parcelas.
+La aplicación no utiliza un bundler ni un framework frontend. Está compuesta por una SPA de JavaScript vanilla y un backend Express. En desarrollo local Express sirve también `frontend/` para poder abrir `http://127.0.0.1:3000/`; en producción IIS sirve el frontend por separado y reenvía `/api/*`.
 
 ### Flujo de arranque
 
 1. IIS sirve los archivos de `frontend/` y reenvía `/api/*` al backend Node local.
-2. `api.js` consulta los endpoints del backend; no contiene registros locales.
-3. `app.js` define la lógica de búsqueda, tarjetas, detalle, mapa y GPS.
-4. `bootstrap.js` espera a que estén listos el DOM y Google Maps.
-5. Cuando ambas dependencias están listas, `bootstrap.js` ejecuta `window.app.initApp()`.
+2. `js/api.js` consulta los endpoints del backend; no contiene registros locales.
+3. `js/app.js` coordina la búsqueda, tarjetas, detalle y navegación de vistas.
+4. `js/map.js` encapsula Google Maps, marcadores, distancia y GPS; `js/utils.js` contiene utilidades puras.
+5. `js/bootstrap.js` registra el callback global, espera al DOM y Google Maps, y carga `app.js` como módulo nativo.
 6. Si Google Maps no carga en ocho segundos, la búsqueda se inicializa igualmente y el mapa queda no disponible hasta que pueda cargarse.
 
 ## Estructura del proyecto
@@ -38,12 +38,23 @@ La aplicación no utiliza un bundler ni un framework frontend. Está compuesta p
 .
 ├── frontend/                           # Archivos publicados por IIS
 │   ├── index.html
-│   ├── styles.css
-│   ├── app.js
-│   ├── bootstrap.js
-│   ├── api.js
+│   ├── assets/                         # Imágenes e iconos públicos
+│   │   ├── images/
+│   │   └── icons/
+│   ├── css/                            # Capas de estilos
+│   │   ├── main.css
+│   │   ├── base.css
+│   │   ├── layout.css
+│   │   ├── components.css
+│   │   └── utilities.css
+│   ├── js/                             # Módulos nativos del frontend
+│   │   ├── app.js
+│   │   ├── bootstrap.js
+│   │   ├── api.js
+│   │   ├── map.js
+│   │   └── utils.js
 │   ├── web.config
-│   └── content_app_buscar/
+│   └── index.html
 ├── backend/                            # API Node y configuración privada
 │   ├── server.js
 │   ├── package.json
@@ -77,13 +88,13 @@ Iniciar solamente la API:
 npm start
 ```
 
-La API queda disponible internamente en:
+En desarrollo local, la aplicación y la API quedan disponibles en:
 
 ```text
 http://127.0.0.1:3000
+```
 
 En producción, IIS publica el frontend y reenvía las rutas `/api/*` a esa API local.
-```
 
 Durante el desarrollo puede utilizarse:
 
@@ -285,7 +296,7 @@ https://www.coovilros.com/descargas/mapajardindelrosario.pdf
 ### Exposición de endpoints y archivos
 
 - `/api/allcolumn` solo responde si `ENABLE_DEBUG_ENDPOINTS=true`; en caso contrario devuelve `404`.
-- Archivos estáticos servidos desde una lista explícita (`publicFiles`) más `/content_app_buscar` con `dotfiles: 'deny'`, `index: false` y `redirect: false`.
+- IIS sirve los archivos estáticos de `frontend/`, incluidos `assets/`, `css/` y `js/`, y aplica el fallback SPA definido en `frontend/web.config`.
 - IIS sirve solamente archivos de `frontend/` y aplica el fallback SPA definido en `frontend/web.config`.
 - Rutas API desconocidas devuelven `404` JSON.
 
@@ -315,7 +326,7 @@ Si PostgreSQL no está disponible, `/api/health` y los endpoints de datos respon
 Si la búsqueda no responde:
 
 1. Revisar la consola del navegador.
-2. Confirmar que `frontend/api.js`, `frontend/app.js` y `frontend/bootstrap.js` carguen sin errores.
+2. Confirmar que `frontend/js/api.js`, `frontend/js/app.js`, `frontend/js/map.js`, `frontend/js/utils.js` y `frontend/js/bootstrap.js` carguen sin errores.
 3. Verificar que aparezca el mensaje `[App] Iniciando — DOM + Google Maps listos`.
 4. Comprobar que `/api/parcelas?q=...` devuelva JSON válido.
 

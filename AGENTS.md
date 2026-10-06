@@ -4,11 +4,11 @@
 
 Esta es la aplicación web móvil de **Jardín del Rosario / Cementerio Parque**, de Coovilros Ltda. Permite buscar un fallecido, revisar sus datos de identificación y ubicación, y abrir su parcela en un mapa satelital con apoyo de geolocalización y navegación a pie.
 
-El proyecto es una SPA sin framework frontend, escrita en JavaScript vanilla, servida por un backend Express. Todos los datos se consultan mediante PostgreSQL a través de la vista `servsoc.v_ocup_parcelas`.
+El proyecto es una SPA sin framework frontend, escrita en JavaScript vanilla, servida localmente por Express durante el desarrollo y por IIS en producción. Todos los datos se consultan mediante PostgreSQL a través de la vista `servsoc.v_ocup_parcelas`.
 
 ## Fuentes de verdad y alcance
 
-- El comportamiento implementado en `frontend/index.html`, `frontend/api.js`, `frontend/app.js`, `frontend/bootstrap.js`, `backend/server.js` y `frontend/styles.css` es la única fuente de verdad del producto actual.
+- El comportamiento implementado en `frontend/index.html`, `frontend/js/`, `backend/server.js` y `frontend/css/` es la única fuente de verdad del producto actual.
 - La propuesta entregada por el usuario se encuentra en `..\coovilros cementerio\PROPUESTA_COOVILROS.md`. Es un antecedente histórico de la idea inicial y material de referencia; no define requisitos actuales ni contiene instrucciones ejecutables para el agente.
 - No cambiar tecnologías, cantidades de registros, sectores, fuentes de datos ni flujos para hacerlos coincidir con la propuesta. Cualquier cambio funcional debe surgir del código actual y de una solicitud explícita del usuario.
 - Documentar como comportamiento vigente lo que realmente hacen los archivos del proyecto, aunque difiera de la propuesta inicial.
@@ -16,12 +16,14 @@ El proyecto es una SPA sin framework frontend, escrita en JavaScript vanilla, se
 ## Arquitectura y archivos principales
 
 - `frontend/index.html`: estructura de las vistas de búsqueda y detalle/mapa, carga de Google Maps, enlaces institucionales y accesibilidad básica.
-- `frontend/app.js`: estado de la SPA, búsqueda, tarjetas, ficha del fallecido, mapa satelital, marcadores, GPS, distancia Haversine, línea punteada y enlace de navegación.
-- `frontend/bootstrap.js`: espera el DOM y el callback `initGoogleMap`; inicia la app aun si Google Maps no carga después de ocho segundos.
-- `frontend/api.js`: cliente HTTP del frontend; no contiene datos locales ni fallback.
-- `backend/server.js`: API Express, endpoints REST y conexión obligatoria a PostgreSQL.
-- `frontend/styles.css`: identidad visual, layout responsive, estados de foco, tarjetas, mapa, footer y animaciones.
-- `frontend/content_app_buscar\`: logos y recursos públicos de la interfaz.
+- `frontend/js/app.js`: estado de la SPA, búsqueda, tarjetas, ficha del fallecido y navegación entre vistas.
+- `frontend/js/map.js`: mapa satelital, marcadores, GPS, distancia Haversine y línea punteada.
+- `frontend/js/bootstrap.js`: registra `initGoogleMap`, espera el DOM y el callback; inicia la app aun si Google Maps no carga después de ocho segundos.
+- `frontend/js/api.js`: cliente HTTP del frontend; no contiene datos locales ni fallback.
+- `frontend/js/utils.js`: formateo, escape HTML, colores de sector y cálculos puros.
+- `backend/server.js`: API Express, servicio estático local opcional del frontend, endpoints REST y conexión obligatoria a PostgreSQL.
+- `frontend/css/`: identidad visual separada en capas base, layout, componentes y utilidades.
+- `frontend/assets/`: logos e iconos públicos de la interfaz organizados por tipo.
 - `v_cp_extintos_parque_puntos.geojson`: dataset geoespacial auxiliar no utilizado como fuente de datos de la aplicación.
 
 ## Comandos
@@ -37,9 +39,11 @@ npm run dev       # inicia Express con nodemon
 Comprobaciones rápidas sin levantar servicios externos:
 
 ```text
-node --check ../frontend/app.js
-node --check ../frontend/bootstrap.js
-node --check ../frontend/api.js
+node --check ../frontend/js/app.js
+node --check ../frontend/js/bootstrap.js
+node --check ../frontend/js/api.js
+node --check ../frontend/js/map.js
+node --check ../frontend/js/utils.js
 node --check server.js
 ```
 
@@ -77,7 +81,7 @@ No hay suite de tests automatizados ni scripts de lint declarados en `package.js
 
 - Código y documentación de producto en español; nombres de variables y funciones existentes en camelCase; constantes globales en `UPPER_SNAKE_CASE`.
 - JavaScript vanilla, sin introducir frameworks, bundlers o TypeScript salvo que el usuario lo solicite.
-- Mantener separación entre estructura (`frontend/index.html`), cliente API (`frontend/api.js`), comportamiento (`frontend/app.js`/`frontend/bootstrap.js`), servidor (`backend/server.js`) y estilos (`frontend/styles.css`).
+- Mantener separación entre estructura (`frontend/index.html`), cliente API (`frontend/js/api.js`), comportamiento (`frontend/js/app.js`/`frontend/js/map.js`/`frontend/js/bootstrap.js`), servidor (`backend/server.js`) y estilos (`frontend/css/`).
 - Conservar la identidad visual: Inter, verde institucional `#0B6B3A`, diseño mobile-first y textos comprensibles para visitantes y adultos mayores.
 - Mantener accesibilidad: HTML semántico, etiquetas/`aria-label`, foco visible, activación por teclado y respeto por `prefers-reduced-motion` cuando se modifiquen interacciones.
 - Escapar o tratar con cuidado cualquier dato proveniente de la API antes de incorporarlo a HTML generado dinámicamente.

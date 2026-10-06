@@ -1,10 +1,8 @@
 /* ============================================================
-   styles.css — Estilos para Jardín del Rosario - Cementerio Parque
+   components.css — Estilos para Jardín del Rosario - Cementerio Parque
    Rediseño institucional: verde, amarillo suave, blanco
    Tipografía accesible para adultos mayores
    ============================================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 /* ---------- Variables de Diseño ---------- */
 :root {

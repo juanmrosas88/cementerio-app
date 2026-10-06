@@ -1,0 +1,8 @@
+/* Estructura de página y composición responsive. */
+.app-body { min-height: 100vh; }
+.app-header, .app-main, .app-footer { width: 100%; }
+.app-main { min-height: 55vh; }
+.view { width: 100%; }
+.header-shell, .footer-shell { margin: 0 auto; }
+.brand-row { display: flex; align-items: center; justify-content: center; }
+.footer-actions { display: flex; align-items: center; justify-content: center; }

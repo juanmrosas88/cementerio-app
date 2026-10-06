@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const PORT = parsePort(process.env.PORT, 3000);
@@ -18,6 +19,7 @@ const MAX_PAGE_SIZE = 1000;
 const MAX_TRACKED_IPS = 10_000;
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX_REQUESTS = 120;
+const FRONTEND_DIR = path.resolve(__dirname, '..', 'frontend');
 
 let pool = null;
 let dbAvailable = false;
@@ -232,6 +234,14 @@ app.get('/api/stats', async (req, res) => {
 });
 
 app.use('/api', (req, res) => publicError(res, 404, 'Ruta API no encontrada'));
+
+// Desarrollo local: permite abrir http://127.0.0.1:3000/ directamente.
+// En producción IIS sigue sirviendo frontend/ y usando web.config.
+app.use(express.static(FRONTEND_DIR, {
+    dotfiles: 'deny',
+    index: 'index.html',
+    redirect: false,
+}));
 
 app.use((err, req, res, next) => {
     if (err && err.type === 'entity.too.large') return publicError(res, 413, 'Solicitud demasiado grande');
