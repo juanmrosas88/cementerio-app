@@ -16,39 +16,53 @@ La persona usuaria puede buscar un fallecido por nombre o apellido, seleccionar 
 - Enlace para abrir indicaciones a pie en Google Maps.
 - Acceso directo a WhatsApp con el mensaje `quiero informacion`.
 - Enlace al mapa institucional en PDF.
-- Fallback local con los registros incluidos en `data.js` cuando la API no está disponible.
+- Mensaje de indisponibilidad con acceso al bot de WhatsApp cuando PostgreSQL no está disponible.
 - Interfaz responsive orientada principalmente a dispositivos móviles.
 
 ## Arquitectura
 
-La aplicación no utiliza un bundler ni un framework frontend. Está compuesta por una SPA de JavaScript vanilla y un servidor Express que sirve los archivos y expone la API de parcelas.
+La aplicación no utiliza un bundler ni un framework frontend. Está compuesta por una SPA de JavaScript vanilla y un backend Express. En desarrollo local Express sirve también `frontend/` para poder abrir `http://127.0.0.1:3000/`; en producción IIS sirve el frontend por separado y reenvía `/api/*`.
 
 ### Flujo de arranque
 
-1. `data.js` define los datos de fallback y las funciones de consulta.
-2. `app.js` define la lógica de búsqueda, tarjetas, detalle, mapa y GPS.
-3. `bootstrap.js` espera a que estén listos el DOM y Google Maps.
-4. Cuando ambas dependencias están listas, `bootstrap.js` ejecuta `window.app.initApp()`.
-5. Si Google Maps no carga en ocho segundos, la búsqueda se inicializa igualmente y el mapa queda no disponible hasta que pueda cargarse.
+1. IIS sirve los archivos de `frontend/` y reenvía `/api/*` al backend Node local.
+2. `js/api.js` consulta los endpoints del backend; no contiene registros locales.
+3. `js/app.js` coordina la búsqueda, tarjetas, detalle y navegación de vistas.
+4. `js/map.js` encapsula Google Maps, marcadores, distancia y GPS; `js/utils.js` contiene utilidades puras.
+5. `js/bootstrap.js` registra el callback global, espera al DOM y Google Maps, y carga `app.js` como módulo nativo.
+6. Si Google Maps no carga en ocho segundos, la búsqueda se inicializa igualmente y el mapa queda no disponible hasta que pueda cargarse.
 
 ## Estructura del proyecto
 
 ```text
 .
-├── index.html                         # Documento principal y estructura de vistas
-├── styles.css                         # Diseño responsive e identidad visual
-├── app.js                             # Lógica de búsqueda, detalle, mapa y GPS
-├── bootstrap.js                       # Inicialización coordinada de la aplicación
-├── data.js                             # Fallback local y funciones de acceso a datos
-├── server.js                           # Servidor Express y API REST
-├── package.json                        # Scripts y dependencias del backend
-├── logoheader.svg                      # Favicon institucional
-├── v_cp_extintos_parque_puntos.geojson # Geodatos auxiliares
-└── content_app_buscar/
-    ├── logo_jdr.png                    # Logo del header
-    ├── logo_coovilros.png              # Logo del footer
-    ├── cp_parcelas.csv                 # Fuente de datos de fallback
-    └── Cementerio_app_ubica_parcela.pdf
+├── frontend/                           # Archivos publicados por IIS
+│   ├── index.html
+│   ├── assets/                         # Imágenes e iconos públicos
+│   │   ├── images/
+│   │   └── icons/
+│   ├── css/                            # Capas de estilos
+│   │   ├── main.css
+│   │   ├── base.css
+│   │   ├── layout.css
+│   │   ├── components.css
+│   │   └── utilities.css
+│   ├── js/                             # Módulos nativos del frontend
+│   │   ├── app.js
+│   │   ├── bootstrap.js
+│   │   ├── api.js
+│   │   ├── map.js
+│   │   └── utils.js
+│   ├── web.config
+│   └── index.html
+├── backend/                            # API Node y configuración privada
+│   ├── server.js
+│   ├── package.json
+│   ├── package-lock.json
+│   └── .env
+├── AGENTS.md
+├── README.md
+└── spec.md
 ```
 
 ## Requisitos
@@ -57,27 +71,30 @@ La aplicación no utiliza un bundler ni un framework frontend. Está compuesta p
 - npm.
 - Navegador moderno con soporte para geolocalización.
 - Clave válida de Google Maps JavaScript API configurada en `index.html`.
-- PostgreSQL/PostGIS sólo si se desea utilizar la base de datos remota.
+- PostgreSQL/PostGIS configurado y accesible; es obligatorio para utilizar la aplicación.
 
 ## Instalación y ejecución
 
-Instalar dependencias:
+Instalar dependencias del backend:
 
 ```bash
+cd backend
 npm install
 ```
 
-Iniciar el servidor:
+Iniciar solamente la API:
 
 ```bash
 npm start
 ```
 
-La aplicación queda disponible en:
+En desarrollo local, la aplicación y la API quedan disponibles en:
 
 ```text
-http://localhost:3000
+http://127.0.0.1:3000
 ```
+
+En producción, IIS publica el frontend y reenvía las rutas `/api/*` a esa API local.
 
 Durante el desarrollo puede utilizarse:
 
@@ -92,15 +109,20 @@ El script `dev` utiliza `nodemon` para reiniciar el servidor cuando cambian los 
 Crear un archivo `.env` a partir de `.env.example`:
 
 ```env
+HOST=127.0.0.1
 PORT=3000
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=usuario
 DB_PASSWORD=contraseña
 DB_NAME=base_de_datos
+# Orígenes CORS permitidos, separados por coma. Vacío = solo same-origin.
+CORS_ORIGINS=
+# Solo desarrollo local; mantener desactivado en producción.
+ENABLE_DEBUG_ENDPOINTS=false
 ```
 
-`server.js` intenta conectarse a PostgreSQL al iniciar. Si la conexión falla, carga automáticamente los registros de `data.js` como fallback.
+`backend/server.js` intenta conectarse a PostgreSQL al iniciar. Si la conexión falla, mantiene la API disponible pero responde `503` en los endpoints de datos; el frontend bloquea la búsqueda y ofrece el reclamo por WhatsApp.
 
 La consulta de producción utiliza la vista:
 
@@ -121,6 +143,14 @@ Los campos esperados incluyen:
 
 Las coordenadas se obtienen calculando el centroide de `geom` con SRID 4326.
 
+## Despliegue en IIS
+
+IIS debe publicar únicamente la carpeta `frontend/`. El archivo `frontend/web.config` reenvía `/api/*` al backend Node en `http://127.0.0.1:3000` y aplica el fallback de la SPA.
+
+El backend se ejecuta desde `backend/` como servicio de Windows mediante NSSM. La cuenta del servicio necesita acceso de lectura al código y a `backend/.env`, pero ese archivo no debe estar dentro de `frontend/` ni publicado por IIS.
+
+En producción, abrir únicamente los puertos 80 y 443. El puerto 3000 debe permanecer vinculado a `127.0.0.1` y no exponerse en el firewall.
+
 ## API
 
 ### Estado de conexión
@@ -137,7 +167,7 @@ Devuelve el estado de la API, el origen de los datos y el total de registros.
 GET /api/parcelas?q=texto
 ```
 
-Sin `q`, devuelve todos los registros disponibles. Con `q`, filtra por el nombre del fallecido en PostgreSQL o utiliza el buscador local del fallback.
+Sin `q`, devuelve todos los registros disponibles desde PostgreSQL. Con `q`, filtra por el nombre del fallecido en PostgreSQL.
 
 Respuesta esperada:
 
@@ -177,14 +207,6 @@ GET /api/stats
 
 Devuelve el total de parcelas y el desglose por nivel.
 
-### Sectores
-
-```http
-GET /api/sectores
-```
-
-Devuelve los colores configurados para los sectores.
-
 ## Uso de la interfaz
 
 1. Ingresar el nombre o apellido en el buscador.
@@ -201,7 +223,7 @@ La precisión del GPS puede variar. La aplicación informa un margen estimado de
 
 ### Google Maps
 
-El mapa se carga desde Google Maps JavaScript API. La clave se referencia desde `index.html` mediante el callback global `initGoogleMap`.
+El mapa se carga desde Google Maps JavaScript API. La clave se referencia desde `frontend/index.html` mediante el callback global `initGoogleMap`.
 
 La aplicación utiliza:
 
@@ -231,23 +253,64 @@ quiero informacion
 https://www.coovilros.com/descargas/mapajardindelrosario.pdf
 ```
 
-## Datos locales
+## Reglas de seguridad implementadas
 
-`data.js` contiene el fallback de registros y las funciones:
+`backend/server.js` aplica las siguientes reglas de forma activa:
 
-- `buscarParcelas(texto)`
-- `fetchParcelas(query)`
-- `fetchParcelaById(id)`
+### Cabeceras de seguridad
 
-Los datos de fallback deben mantenerse en UTF-8 para conservar correctamente caracteres como `Ñ`, `Á`, `É`, `Ü` y otros nombres propios.
+- `X-Powered-By` deshabilitado (`app.disable('x-powered-by')`).
+- `X-Content-Type-Options: nosniff` — evita la interpretación de tipos MIME incorrectos.
+- `X-Frame-Options: DENY` — impide incrustar la app en iframes (anti clickjacking).
+- `Referrer-Policy: strict-origin-when-cross-origin` — limita el referente enviado.
+- `Permissions-Policy: geolocation=(self)` — solo la app puede usar geolocalización.
+- `Content-Security-Policy` restrictiva: `default-src 'self'`, `base-uri 'self'`, `frame-ancestors 'none'`, `object-src 'none'`; `script-src`/`style-src` permiten Google Maps/Fonts e `'unsafe-inline'` (requerido por la SPA vanilla); `img-src` admite `data:`/`blob:` y dominios de Google.
 
-## Consideraciones de seguridad y despliegue
+### CORS
+
+- Configurable mediante `CORS_ORIGINS` (lista separada por comas).
+- Vacío = solo solicitudes same-origin; un origen no listado recibe un error de CORS.
+- Solo métodos `GET` y `OPTIONS`, sin credenciales (`credentials: false`).
+
+### Rate limiting
+
+- 120 solicitudes por minuto por IP en `/api` (`RATE_MAX_REQUESTS` / `RATE_WINDOW_MS`).
+- Exceso: `429` con `Retry-After: 60`.
+- Máximo 10 000 IPs rastreadas (`MAX_TRACKED_IPS`); al saturarse se responde `503`.
+- Los depósitos expirados se limpian automáticamente.
+
+### Validación y límites de entrada
+
+- `q` máximo 100 caracteres (`MAX_QUERY_LENGTH`); exceso → `400`.
+- `limit` máximo 1000 (por defecto 250) y `offset` máximo 100 000; valores inválidos caen al valor por defecto.
+- `:id` debe ser numérico (`/^[0-9]+$/`); si no → `400`.
+- Cuerpo JSON limitado a 100 KB; exceso → `413`.
+
+### Protección de la base de datos
+
+- Solo consultas parametrizadas (`$1`, `$2`, …); nunca interpolación de strings.
+- `LIKE` con cláusula `ESCAPE` y `escapeLike()` para neutralizar `%`, `_` y `\` en el término de búsqueda.
+- Pool acotado: máximo 10 conexiones, `statement_timeout` 5 s, `query_timeout` 6 s y tiempo de conexión 3 s.
+- Los errores se registran en el servidor; el cliente recibe mensajes genéricos. El `stack` solo se imprime fuera de producción.
+
+### Exposición de endpoints y archivos
+
+- `/api/allcolumn` solo responde si `ENABLE_DEBUG_ENDPOINTS=true`; en caso contrario devuelve `404`.
+- IIS sirve los archivos estáticos de `frontend/`, incluidos `assets/`, `css/` y `js/`, y aplica el fallback SPA definido en `frontend/web.config`.
+- IIS sirve solamente archivos de `frontend/` y aplica el fallback SPA definido en `frontend/web.config`.
+- Rutas API desconocidas devuelven `404` JSON.
+
+### Cierre ordenado
+
+- `SIGTERM` y `SIGINT` cierran el pool de PostgreSQL antes de salir.
+
+## Consideraciones de despliegue
 
 - No exponer credenciales PostgreSQL en el repositorio.
-- Mantener `.env` fuera del control de versiones.
+- Mantener `backend/.env` fuera del control de versiones (ya está en `.gitignore`).
 - Servir la aplicación mediante HTTPS en producción para permitir geolocalización.
 - Restringir la clave de Google Maps por dominio y APIs habilitadas.
-- Verificar que el endpoint `/api/parcelas` no exponga columnas innecesarias.
+- Mantener `ENABLE_DEBUG_ENDPOINTS=false` en producción.
 - Probar el flujo en dispositivos móviles reales antes de publicar.
 
 ## Diagnóstico rápido
@@ -255,15 +318,15 @@ Los datos de fallback deben mantenerse en UTF-8 para conservar correctamente car
 Comprobar el backend:
 
 ```bash
-curl http://localhost:3000/api/health
+curl http://127.0.0.1:3000/api/health
 ```
 
-Si la respuesta indica `source: "mock"`, la aplicación está funcionando con `data.js` porque PostgreSQL no está disponible o falló la conexión.
+Si PostgreSQL no está disponible, `/api/health` y los endpoints de datos responden `503`; la interfaz muestra el mensaje de reclamo por WhatsApp.
 
 Si la búsqueda no responde:
 
 1. Revisar la consola del navegador.
-2. Confirmar que `app.js`, `data.js` y `bootstrap.js` carguen sin errores.
+2. Confirmar que `frontend/js/api.js`, `frontend/js/app.js`, `frontend/js/map.js`, `frontend/js/utils.js` y `frontend/js/bootstrap.js` carguen sin errores.
 3. Verificar que aparezca el mensaje `[App] Iniciando — DOM + Google Maps listos`.
 4. Comprobar que `/api/parcelas?q=...` devuelva JSON válido.
 

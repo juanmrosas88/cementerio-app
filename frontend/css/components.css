@@ -1,0 +1,550 @@
+/* ============================================================
+   components.css — Estilos para Jardín del Rosario - Cementerio Parque
+   Rediseño institucional: verde, amarillo suave, blanco
+   Tipografía accesible para adultos mayores
+   ============================================================ */
+
+/* ---------- Variables de Diseño ---------- */
+:root {
+    --jdr-green:        #0B6B3A;
+    --jdr-green-dark:   #005826;
+    --jdr-green-light:  #E8F5E9;
+    --jdr-green-soft:   #C8E6C9;
+    --jdr-yellow:       #FFF8E1;
+    --jdr-yellow-mid:   #FFD700;
+    --jdr-bg:           #F5F7F5;
+    --jdr-text:         #1A1A1A;
+    --jdr-text-sec:     #555555;
+    --jdr-white:        #FFFFFF;
+
+    --shadow-sm:  0 1px 3px rgba(11,107,58,0.08), 0 1px 2px rgba(11,107,58,0.05);
+    --shadow-md:  0 4px 12px rgba(11,107,58,0.10), 0 2px 4px rgba(11,107,58,0.06);
+    --shadow-lg:  0 10px 30px rgba(11,107,58,0.12), 0 4px 8px rgba(11,107,58,0.08);
+}
+
+/* ---------- Reset y base ---------- */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+.hidden { display: none; }
+
+html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--jdr-text);
+    background-color: var(--jdr-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+::-webkit-scrollbar-track {
+    background: var(--jdr-bg);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--jdr-green);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--jdr-green-dark);
+}
+
+/* ---------- Selección ---------- */
+::selection {
+    background: var(--jdr-green);
+    color: #fff;
+}
+
+/* ---------- Focus accesible ---------- */
+:focus-visible {
+    outline: 3px solid var(--jdr-green);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* ---------- Enlaces ---------- */
+a {
+    color: var(--jdr-green);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+a:hover {
+    color: var(--jdr-green-dark);
+}
+
+/* ---------- Búsqueda ---------- */
+.search-input-field::placeholder {
+    color: var(--jdr-text-sec);
+    font-weight: 400;
+    opacity: 0.75;
+}
+
+/* ---------- Tarjetas de resultados ---------- */
+.result-card {
+    background: var(--jdr-white);
+    border-radius: 1rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid rgba(11,107,58,0.08);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.2s ease,
+                border-color 0.2s ease;
+    will-change: transform;
+}
+.result-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(11,107,58,0.18);
+}
+.result-card:active {
+    transform: scale(0.99);
+}
+.result-card:focus {
+    outline: 3px solid var(--jdr-green);
+    outline-offset: 2px;
+}
+
+.result-card .card-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--jdr-green);
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+}
+
+.result-card .card-data {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.25rem 1rem;
+    font-size: 0.85rem;
+    color: var(--jdr-text);
+}
+
+.result-card .card-data .data-label {
+    font-weight: 700;
+    color: var(--jdr-text-sec);
+    min-width: 2.5rem;
+}
+
+.result-card .card-data .data-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+}
+
+/* ---------- Mapa ---------- */
+#map-container {
+    position: relative;
+    background: #1a1a1a;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+/* Google Maps InfoWindow */
+.gm-style-iw {
+    border-radius: 0.75rem;
+    overflow: visible;
+}
+.gm-style-iw-c {
+    border-radius: 0.75rem;
+    padding: 0;
+    box-shadow: var(--shadow-md);
+    border: 1px solid rgba(11,107,58, 0.12);
+    font-family: 'Inter', sans-serif;
+}
+.gm-style-iw-d {
+    overflow: auto;
+}
+.gm-style-iw-tc::after {
+    display: none;
+}
+.gm-style .gm-style-iw-tc {
+    background: white;
+    border-radius: 4px;
+}
+
+/* ---------- Badge de distancia ---------- */
+#distance-badge {
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+#distance-badge span {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* ---------- Advertencia GPS ---------- */
+#gps-warning {
+    animation: fade-slide-in 0.3s ease;
+}
+
+@keyframes fade-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ---------- Botón WhatsApp animación sutil ---------- */
+.whatsapp-btn {
+    animation: whatsapp-pulse 2.5s ease-in-out infinite;
+}
+@keyframes whatsapp-pulse {
+    0%, 100% { box-shadow: 0 4px 14px rgba(37,211,102,0.35); }
+    50%      { box-shadow: 0 4px 22px rgba(37,211,102,0.55); }
+}
+
+/* ---------- Ajustes móviles ---------- */
+@media (hover: none) and (pointer: coarse) {
+    .result-card:hover {
+        transform: none;
+        box-shadow: var(--shadow-sm);
+    }
+    .result-card:active {
+        transform: scale(0.98);
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        font-size: 16px;
+    }
+    #app-root {
+        padding-top: 0.5rem;
+    }
+    .result-card .card-data {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------- Footer ---------- */
+footer a {
+    transition: all 0.15s ease;
+}
+
+/* ---------- Accesibilidad: reduced-motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+        transition-duration: 0.01ms;
+        scroll-behavior: auto;
+    }
+}
+
+/* ---------- Referencia visual: Jardín del Rosario ---------- */
+:root { --jdr-green: #087a43; --jdr-green-dark: #056334; --jdr-bg: #fff; --jdr-text: #111; }
+body { background:#fff; color:#111; min-height:100vh; }
+#btn-back { display:inline-flex; align-items:center; gap:.3rem; border:0; background:transparent; color:#087a43; font-size:.78rem; font-weight:700; padding:.2rem 0; cursor:pointer; }
+#btn-back svg { width:20px; height:20px; max-width:20px; max-height:20px; }
+/* Iconografía propia: todos los SVG mantienen el tamaño visual de w-5 h-5.
+   Se excluye el contenido interno de Google Maps. */
+body > header svg,
+body > main svg:not(#map-container svg),
+body > footer svg,
+body svg.w-4.h-4,
+body svg.w-5.h-5,
+body svg.w-3\.5.h-3\.5 {
+    width:20px;
+    height:20px;
+    max-width:20px;
+    max-height:20px;
+    flex:0 0 20px;
+}
+.app-header { background:#f1f1f1; text-align:center; padding:1.35rem 1rem .7rem; border-bottom:1px solid #ddd; }
+.app-header .brand-lockup { display:inline-flex; align-items:center; justify-content:center; }
+.app-header h1 { display:none; }
+.app-header .brand-lockup + div p { display:block; margin:.5rem 0 .15rem; color:#111; font-size:1.2rem; font-weight:800; }
+.app-header .brand-lockup + div { display:block; }
+.app-header .gps-note p { color:#222; }
+.brand-logo { display:block; width:auto; height:58px; max-width:85%; object-fit:contain; }
+.brand-copy, .header-shell > div:first-child > div:last-child { display:none; }
+.page-subtitle { margin:.5rem 0 .15rem; font-size:1.2rem; font-weight:800; }
+.header-description { margin:0 auto .35rem; max-width:350px; font-size:.78rem; line-height:1.35; font-weight:700; }
+.gps-note { margin:.25rem 0 0; font-size:.73rem; color:#222; }
+.gps-icon { color:#05a64f; font-size:1rem; margin-right:.2rem; }
+.app-shell, #app-root { width:100%; margin:0 auto; }
+.app-main { padding:0 1rem 9.25rem; }
+.search-section { padding-top:1rem; }
+.search-box { display:flex; align-items:stretch; border:1px solid #a9a9a9; border-radius:6px; overflow:hidden; background:#f8f8f8; }
+.search-input-field { min-width:0; flex:1; height:39px; padding:0 .8rem; border:0; background:#f0f0f0; font-size:.92rem; outline:0; }
+.relative { display:flex; align-items:stretch; border:1px solid #aaa; border-radius:6px; overflow:hidden; background:#f0f0f0; }
+#search-input { width:100%; }
+.search-input-field::placeholder { color:#c7cbd0; opacity:1; }
+.search-btn { width:39px; height:39px; border:0; background:#087a43; color:#fff; font-size:1rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.search-btn svg { width:21px; height:21px; max-width:21px; max-height:21px; }
+.results-count { margin:.55rem .1rem 1.2rem; text-align:right; font-size:.68rem; font-weight:600; }
+.results-count strong { font-weight:800; }
+.results-grid { display:grid; gap:.7rem; }
+.result-card { border:1px solid #222; border-radius:7px; padding:1rem 1.25rem; box-shadow:none; background:#fff; }
+.result-card .card-name { color:#111; font-size:.98rem; margin:0 0 .45rem; text-transform:uppercase; }
+.result-card .card-data { font-size:.76rem; grid-template-columns:1fr 1fr; gap:.2rem .8rem; }
+.results-count svg { display:none; }
+
+/* ---------- Indicador de carga de registros ---------- */
+.results-count-loading {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .45rem;
+}
+.results-count-loading .spinner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(8,122,67,.18);
+    border-top-color: #087a43;
+    animation: jdr-spin .7s linear infinite;
+    flex: 0 0 auto;
+}
+@keyframes jdr-spin {
+    to { transform: rotate(360deg); }
+}
+/* .results-count-loading define display:flex, lo que le ganaría a .hidden
+   (misma especificidad, regla más abajo). Esta regla más específica
+   asegura que la clase hidden sí lo oculte. */
+.results-count-loading.hidden { display: none; }
+
+/* ---------- Servicio de datos no disponible ---------- */
+.database-error {
+    display:flex;
+    flex-direction:column;
+    gap:.45rem;
+    margin:1rem 0;
+    padding:.9rem 1rem;
+    border:1px solid #d99a35;
+    border-radius:8px;
+    background:#fff8e8;
+    color:#5f430d;
+    font-size:.82rem;
+    line-height:1.4;
+}
+.database-error a {
+    align-self:flex-start;
+    margin-top:.2rem;
+    padding:.45rem .7rem;
+    border-radius:6px;
+    background:#087a43;
+    color:#fff;
+    font-weight:700;
+    text-decoration:none;
+}
+.database-error a:hover,
+.database-error a:focus-visible { background:#065d33; }
+.search-input-field:disabled,
+.search-btn:disabled { cursor:not-allowed; opacity:.55; }
+
+.result-card .card-data .data-label { color:#111; }
+.view-map { padding-top:.8rem; }
+.back-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.65rem; }
+.back-button { border:0; background:none; color:#087a43; font-weight:700; padding:.2rem 0; cursor:pointer; }
+.record-card { position:relative; border:1px solid #222; border-radius:7px; padding:.8rem 1rem; box-shadow:none; }
+#record-header { position:relative; border:1px solid #222; border-radius:7px; padding:.8rem 1rem; margin:0 0 .7rem; background:#fff; box-shadow:none; }
+.record-name { margin:0 0 .45rem; font-size:1rem; text-transform:uppercase; }
+#record-name { margin:0 0 .45rem; font-size:1rem; color:#111; text-transform:uppercase; }
+.record-card-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:.75rem; margin-bottom:.45rem; }
+.record-card-heading .record-name { min-width:0; margin:0; }
+.record-data { display:grid; grid-template-columns:1fr 1fr; gap:.25rem .8rem; font-size:.76rem; }
+.record-data > div { display:flex; align-items:baseline; gap:.25rem; min-width:0; white-space:nowrap; }
+.record-data > div:nth-child(5) { grid-column:1 / -1; }
+.record-data b, .record-data .font-bold { flex:0 0 auto; color:#111; }
+.record-data b { margin-right:.25rem; }
+.record-map-mark { position:absolute; right:1.1rem; bottom:1rem; color:#00a94f; font-size:1.35rem; }
+.map-card { margin-top:.7rem; border:1px solid #222; border-radius:7px; overflow:hidden; background:#d2d3d4; }
+#map-container { height:215px; background:#d2d3d4; }
+.map-disclaimer { display:none; }
+.maps-button { display:none; }
+.distance-badge { position:absolute; z-index:2; }
+.gps-warning { padding:.4rem .6rem; background:#fff; font-size:.7rem; }
+.app-footer { background:#f1f1f1; border-top:0; color:#111; text-align:center; padding:.55rem 1rem .75rem; }
+.footer-actions { display:flex; justify-content:center; align-items:center; gap:1.2rem; margin-bottom:.35rem; }
+.footer-action { padding:0; border:0; background:none; color:#009b4c; font-size:1.25rem; font-weight:400; }
+.footer-action span:not(.fa-stack) { display:none; }
+.copyright { margin:0; font-size:.63rem; font-weight:800; }
+.footer-logo { display:block; width:auto; height:42px; max-width:150px; margin:.65rem auto 0; }
+footer a:hover { color:#087a43; }
+@media (min-width:500px) { .app-header,.app-main,.app-footer { border-left:0; border-right:0; } }
+
+/* Compatibilidad con el markup existente */
+body > header { position:static; background:#f1f1f1; box-shadow:none; color:#111; text-align:center; padding:.85rem 1rem .55rem; }
+body > header > div { padding:0; }
+body > header > div > div:first-child { display:flex; align-items:center; justify-content:center; width:100%; }
+body > header > div > div:first-child > a { display:block; }
+body > header img { height:58px; width:auto; max-width:85%; padding:0; border-radius:0; background:transparent; }
+body > header h1 { display:none; }
+body > header p { color:#111; }
+body > header > div > div:first-child p { margin:.45rem 0 .1rem; font-size:1.2rem; font-weight:800; }
+body > header > div > div:last-child { margin:.25rem 0 0; padding:0; background:transparent; display:block; }
+body > header > div > div:last-child svg { display:none; }
+body > header > div > div:last-child p { font-size:.72rem; margin:0; }
+body > header > div > div:last-child p::before { content:'●'; color:#00a94f; font-size:.85rem; margin-right:.25rem; }
+body > main#app-root { padding:0 1rem 2rem; background:#fff; }
+body > main#app-root > section:first-child > div:first-child > label { display:none; }
+body > footer { background:#f1f1f1; color:#111; border:0; padding:.55rem 1rem .75rem; text-align:center; }
+body > footer > div { padding:0; }
+body > footer > div > div:first-child { display:flex; justify-content:center; gap:1rem; margin:0 0 .25rem; }
+body > footer a { padding:.15rem .45rem; border:0; border-radius:0; background:transparent; color:#009b4c; box-shadow:none; font-size:1.2rem; }
+body > footer a svg { width:1.15rem; height:1.15rem; }
+body > footer a { font-size:0; }
+body > footer a svg { display:inline-block; }
+body > footer > div > div:last-child { border:0; padding:0; display:block; }
+body > footer > div > div:last-child span { display:block; color:#111; font-size:.63rem; font-weight:800; }
+body > footer img { height:42px; opacity:1; }
+
+/* Estructura semántica del documento */
+.header-shell { margin:0 auto; padding:0; }
+.brand-row { display:flex; align-items:center; justify-content:center; }
+.brand-link { display:block; }
+.brand-copy { display:block; min-width:0; }
+.brand-copy h1 { display:none; }
+.brand-copy p { display:block; margin:.45rem 0 .1rem; color:#111; font-size:1.2rem; font-weight:800; }
+.gps-note { margin:.25rem 0 0; padding:0; background:transparent; }
+.gps-note p { margin:0; color:#222; font-size:.72rem; }
+.gps-note svg { display:none; }
+.search-label { display:none; }
+.search-section { margin:0; }
+.footer-actions { display:flex; }
+
+/* ---------- Ajustes visuales de controles y mapa ---------- */
+.brand-row { width:100%; justify-content:center; text-align:center; }
+body > header .brand-row { display:flex !important; align-items:center; justify-content:center; width:100%; }
+.brand-link { width:max-content; margin:0 auto; }
+.whatsapp-btn,
+.whatsapp-btn:hover,
+.whatsapp-btn:focus-visible {
+    background:transparent !important;
+    box-shadow:none !important;
+    animation:none;
+}
+
+/* Ajuste fino del foco dentro del globo del icono combinado */
+.wa-bulb {
+    transform: translateY(-2px);
+}
+
+/* Icono SVG del chatbot en el footer — mismo tamaño que el ícono del mapa */
+.footer-icon-svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+#distance-badge {
+    position:absolute;
+    top:1rem;
+    left:1rem;
+    z-index:1000;
+    pointer-events:none;
+}
+#distance-badge > span {
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    padding:.42rem .75rem;
+    border-radius:999px;
+    background:#fff;
+    color:#087a43;
+    border:1px solid rgba(8,122,67,.12);
+    box-shadow:0 2px 8px rgba(0,0,0,.18);
+    font-size:.78rem;
+    font-weight:700;
+    line-height:1.1;
+    white-space:nowrap;
+}
+#distance-badge svg { width:1rem; height:1rem; flex:0 0 1rem; }
+.map-card { position:relative; overflow:hidden; border:1px solid #222; border-radius:12px; }
+#btn-back {
+    display:inline-flex;
+    align-items:center;
+    gap:.4rem;
+    margin-top:.75rem;
+    padding:.42rem .85rem;
+    border:1px solid rgba(8,122,67,.14);
+    border-radius:999px;
+    background:#fff;
+    color:#087a43;
+    box-shadow:0 2px 8px rgba(0,0,0,.14);
+    font-size:.78rem;
+    font-weight:700;
+    font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height:1.1;
+}
+#btn-back:hover { background:#e8f5e9; color:#056334; }
+#btn-back svg { width:1rem; height:1rem; }
+
+/* ---------- Layout responsive final ---------- */
+html, body { min-width: 0; }
+body.app-body { display:flex; flex-direction:column; min-height:100vh; background:#fff; }
+body > header.app-header,
+body > main#app-root,
+body > footer.app-footer {
+    width:100%;
+    max-width:none;
+    border-left:0;
+    border-right:0;
+}
+body > header.app-header { flex:0 0 auto; padding:clamp(1rem, 3vw, 2rem) clamp(1rem, 5vw, 4rem) 1rem; }
+.header-shell { width:100%; max-width:1200px; margin:0 auto; }
+body > header img { width:auto; height:clamp(4rem, 10vw, 7rem); max-width:min(90vw, 700px); }
+body > main#app-root { flex:1 0 auto; padding:0 clamp(1rem, 5vw, 4rem) 2rem; }
+.view { width:100%; max-width:1100px; margin:0 auto; }
+.search-intro { padding:clamp(1.25rem, 3vw, 2.25rem) 0 1rem; text-align:center; }
+.search-intro h1 { margin:0 0 .65rem; font-size:clamp(1.25rem, 2.5vw, 2rem); line-height:1.2; }
+.search-intro p { max-width:42rem; margin:.35rem auto; font-size:clamp(.9rem, 1.5vw, 1.1rem); line-height:1.45; font-weight:700; }
+.search-intro .gps-note { font-size:clamp(.8rem, 1.2vw, .95rem); font-weight:500; }
+.search-section { max-width:900px; margin:0 auto; }
+.results-grid { grid-template-columns:repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
+.record-map-button { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; flex:0 0 auto; min-height:2.35rem; padding:.42rem .85rem; border:1px solid rgba(8,122,67,.14); border-radius:999px; background:#fff; color:#087a43; box-shadow:0 2px 8px rgba(0,0,0,.14); font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size:.78rem; font-weight:700; line-height:1.1; }
+.record-map-button:hover { color:#056334; background:#e8f5e9; border-color:rgba(8,122,67,.22); }
+.record-map-button:active { transform:translateY(1px); }
+.record-map-button svg { width:1.1rem; height:1.1rem; flex:0 0 auto; }
+.record-data { padding-right:0; }
+.map-card { position:relative; width:100%; }
+#map-container { height:clamp(300px, 55vw, 600px); min-height:300px; border-radius:12px; }
+.map-card.map-loaded { border-color:transparent; }
+.map-card.map-loaded #map-container { border-radius:12px; }
+#distance-badge { top:1rem; left:1rem; }
+body > footer.app-footer { position:static; transform:none; flex:0 0 auto; padding:0; background:#f1f1f1; }
+body > footer > div { width:100%; max-width:1100px; margin:0 auto; }
+body > footer > div > div:first-child { padding:1rem clamp(1rem, 5vw, 4rem) .65rem; }
+body > footer > div > div:last-child { background:#fff; padding:1rem clamp(1rem, 5vw, 4rem) 1.25rem; }
+body > footer img { width:auto; height:auto; max-width:min(70vw, 220px); object-fit:contain; }
+body > footer a { font-size:0; }
+body > footer a svg { width:1.4rem; height:1.4rem; }
+
+@media (min-width: 768px) {
+    .view-map { padding-top:1.5rem; }
+    .view-map .back-row { max-width:900px; margin-left:auto; margin-right:auto; }
+    .view-map .record-card { max-width:900px; margin-left:auto; margin-right:auto; }
+    .view-map .map-card { max-width:1100px; margin-left:auto; margin-right:auto; }
+}
+
+@media (max-width: 480px) {
+    body > header img { max-width:95vw; }
+    .back-row { align-items:flex-start; }
+    .record-card-heading { align-items:flex-start; gap:.5rem; }
+    .record-map-button { max-width:58%; text-align:center; }
+    #map-container { min-height:280px; }
+}
+
+/* El logo debe conservar su ancho natural y quedar centrado dentro del header. */
+body > header .brand-logo {
+    width:auto;
+    max-width:min(90vw, 700px);
+    margin-left:auto;
+    margin-right:auto;
+}

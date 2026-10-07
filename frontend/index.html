@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jardín del Rosario - Ubicación de Parcelas</title>
+    <meta name="description" content="Aplicación para ubicar Parcelas - Jardín del Rosario Cementerio Parque - Coovilros Ltda.">
+    <meta name="theme-color" content="#0B6B3A">
+
+    <script src="js/bootstrap.js"></script>
+
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAU8QQ9kx9Mj46K0BwPNueT2Nsk2sXxOuM&v=weekly&callback=initGoogleMap">
+    </script>
+
+    <link rel="icon" type="image/svg+xml" href="assets/icons/logoheader.svg">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/main.css">
+</head>
+
+<body class="app-body">
+
+    <!-- ==================== HEADER ==================== -->
+    <header class="app-header">
+        <div class="header-shell">
+            <!-- Logo institucional -->
+            <div class="brand-row">
+                <a href="#" onclick="app.goHome(); return false;" class="brand-link">
+                <img src="assets/images/logo_jdr.png"
+                         alt="Jardín del Rosario"
+                         class="brand-logo">
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== MAIN ==================== -->
+    <main id="app-root" class="app-main">
+
+        <!-- ===== VISTA BÚSQUEDA ===== -->
+        <section id="view-search" class="view">
+
+            <div class="search-intro">
+                <h1>Aplicación para ubicar Parcelas.</h1>
+                <p>El sistema lo guiará para ubicar y llegar a la parcela del fallecido dentro del parque.</p>
+                <p class="gps-note"><span class="gps-icon" aria-hidden="true">●</span>Activar modo localización en su dispositivo.</p>
+            </div>
+
+            <!-- Barra de búsqueda -->
+            <div class="search-section">
+                <label for="search-input" class="search-label">
+                    Buscar fallecido/a
+                </label>
+                <div class="relative">
+                    <input
+                        type="search"
+                        id="search-input"
+                        class="search-input-field"
+                        placeholder="Ingrese aquí Nombre o Apellido del fallecido"
+                        autocomplete="off"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        spellcheck="false"
+                        disabled
+                    >
+                    <button
+                        type="button"
+                        id="search-btn"
+                        class="search-btn"
+                        aria-label="Buscar"
+                        disabled
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div id="database-error" class="database-error hidden" role="alert" aria-live="assertive">
+                    <strong>El servicio de búsqueda no está disponible.</strong>
+                    <span>Por favor, realizá tu reclamo al bot de WhatsApp.</span>
+                    <a id="database-error-whatsapp" href="https://wa.me/5493573446630?text=Hola%2C%20quiero%20hacer%20un%20reclamo%20porque%20el%20buscador%20del%20cementerio%20no%20est%C3%A1%20disponible." target="_blank" rel="noopener noreferrer">
+                        Reclamar por WhatsApp
+                    </a>
+                </div>
+
+                <!-- Indicador de carga: visible desde que abre la app hasta que llegan los datos -->
+                <div id="results-count-loading" class="results-count results-count-loading" role="status" aria-live="polite">
+                    <span class="spinner" aria-hidden="true"></span>
+                    <span>Cargando registros…</span>
+                </div>
+
+                <!-- Contador de registros -->
+                <div id="results-count" class="results-count hidden">
+                    <span>
+                        <svg class="w-4 h-4 text-jdr-yellow-mid" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                        Total de registros encontrados: <strong id="results-count-value">0</strong>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Grilla de resultados -->
+            <div id="results-grid" class="results-grid">
+            </div>
+
+            <!-- Estado vacío -->
+            <div id="empty-state" class="hidden mt-6">
+                <div class="bg-white rounded-2xl p-8 shadow-sm border border-jdr-green/10 text-center">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-jdr-green-light flex items-center justify-center">
+                        <svg class="w-8 h-8 text-jdr-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-jdr-green mb-1">No se encontraron resultados</h3>
+                    <p class="text-sm text-jdr-text-sec">
+                        Intente con otro nombre o apellido.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== VISTA MAPA ===== -->
+        <section id="view-map" class="view hidden">
+
+            <!-- Botón volver -->
+            <div class="back-row">
+                <button
+                    type="button"
+                    id="btn-back"
+                    class="back-button"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Volver a la búsqueda
+                </button>
+            </div>
+
+            <!-- Ficha del fallecido -->
+            <div id="record-header" class="record-card">
+                <div class="record-card-heading">
+                    <h2 id="record-name" class="record-name"></h2>
+                    <a id="record-google-maps" class="record-map-button" href="#" target="_blank" rel="noopener noreferrer">
+                        <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z" />
+                            <circle cx="12" cy="10" r="2.25" />
+                        </svg>
+                        Llegar en Google Maps
+                    </a>
+                </div>
+                <div class="record-data">
+                    <div>
+                        <b>Nac.</b>
+                        <span id="record-birth-text"></span>
+                    </div>
+                    <div>
+                        <b>Def.</b>
+                        <span id="record-death-text"></span>
+                    </div>
+                    <div>
+                        <b>Sec.</b>
+                        <span id="record-sector"></span>
+                    </div>
+                    <div>
+                        <b>Lot.</b>
+                        <span id="record-lote"></span>
+                    </div>
+                    <div>
+                        <b>Par.</b>
+                        <span id="record-parcela"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contenedor del mapa -->
+            <div class="map-card" id="map-card">
+                <div id="distance-badge" class="absolute top-3 left-3 z-[1000] hidden">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur shadow-lg border border-jdr-green/10
+                               text-xs font-bold text-jdr-green">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span id="distance-value">—</span>
+                    </span>
+                </div>
+
+                <div id="map-container">
+                </div>
+
+                <div id="gps-warning" class="absolute bottom-3 left-3 right-3 z-[1000] hidden">
+                    <div class="bg-white/90 backdrop-blur rounded-xl px-3 py-2 text-xs text-jdr-text-sec shadow border border-jdr-green-light flex items-start gap-2">
+                        <svg class="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        <span>
+                            El GPS no está disponible. Para navegación precisa, use
+                            <a href="#" id="gps-warning-gmaps-link" target="_blank" class="text-jdr-green font-semibold underline hover:text-jdr-green-dark">Google Maps</a>
+                            con las indicaciones para llegar a la parcela.
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="app-footer">
+        <div class="footer-shell">
+            <!-- Fila de acciones -->
+            <div class="footer-actions">
+                <!-- Chatbot WhatsApp -->
+                <a href="https://wa.me/5493573446630"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="footer-action whatsapp-btn"
+                   aria-label="Contactar al chatbot de la cooperativa por WhatsApp">
+                    <svg class="footer-icon-svg" viewBox="0 0 6300 6300" fill="currentColor" aria-hidden="true">
+                        <path d="M1566 69c502,-133 1054,-72 1513,172 506,264 895,742 1046,1293 96,350 106,728 14,1079l-543 0c108,-361 113,-748 -38,-1100 -191,-484 -642,-856 -1154,-952 -390,-84 -810,2 -1144,217 -435,274 -724,772 -730,1287 -16,462 194,924 544,1225 149,134 331,222 501,325l0 584 1050 -1c0,467 -2,933 1,1400l-1575 0 0 -1679c-428,-250 -768,-651 -931,-1119 -211,-590 -141,-1276 196,-1807 276,-453 735,-792 1250,-924zm-514 2032c-24,-563 487,-1068 1048,-1052 -1,175 1,350 0,526 -277,9 -522,246 -524,526l-524 0zm2097 1050l3151 0 0 2445c-332,5 -664,0 -996,3 -51,-11 -77,33 -102,67 -159,212 -315,426 -478,634 -157,-209 -316,-416 -470,-628 -27,-28 -47,-84 -96,-74l-1007 -3 -2 -2444z"/>
+                    </svg>
+                </a>
+
+                <!-- Mapa PDF -->
+                <a href="https://www.coovilros.com/descargas/mapajardindelrosario.pdf"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="footer-action map-pdf-btn"
+                   aria-label="Ver mapa del cementerio en PDF">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                    </svg>
+                </a>
+            </div>
+
+            <!-- Copyright -->
+            <div class="footer-brand">
+                <span>©2026-Coovilros Ltda.</span>
+                <img src="assets/images/logo_coovilros.png"
+                     alt="Coovilros - Cooperativa Villa del Rosario"
+                     class="footer-logo">
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
